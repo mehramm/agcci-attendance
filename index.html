@@ -321,7 +321,7 @@ details.panel .inner{padding:0 16px 14px}
 .toast{pointer-events:auto;display:flex;align-items:center;gap:12px;background:#24163A;color:#fff;padding:12px 14px 12px 16px;border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,.3);font-weight:600;animation:toastIn .28s cubic-bezier(.2,.8,.2,1);width:100%;border-left:4px solid var(--gold)}
 .toast.success{border-left-color:#22C55E}.toast.error{border-left-color:#F87171}
 .toast .msg{flex:1}
-.toast button{background:rgba(255,255,255,.14);border:0;color:#fff;font-weight:800;padding:7px 12px;min-height:40px;border-radius:9px;cursor:pointer}
+.toast button{background:rgba(255,255,255,.14);border:0;color:#fff;font-weight:800;padding:7px 12px;min-height:44px;border-radius:9px;cursor:pointer}
 .toast.out{animation:toastOut .22s ease forwards}
 
 @keyframes cardIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
@@ -506,6 +506,7 @@ details.panel .inner{padding:0 16px 14px}
   .mark-top .date-nav{flex:1 1 220px;flex-wrap:nowrap}
   .mark-top #mark-date{flex:1;min-width:0}
   .mark-top .grp-sel{flex:1 1 160px}
+  .mark-top .sort-sel{flex:1 1 140px}
   .count{padding:5px 8px;font-size:.8rem;gap:5px;border-radius:10px}
   .count b{font-size:1rem}
   .srow{padding:10px 6px;gap:8px}
@@ -810,6 +811,17 @@ details.panel .inner{padding:0 16px 14px}
 .rpt td.note{font-size:9.5px;color:#3d3846}
 .rpt-table tbody tr:nth-child(even) td{background:#FBF9FC}
 .rpt-mini td,.rpt-mini th{padding:4px 5px}
+.rpt-mini .sub{font-size:8.5px;color:var(--muted);font-weight:400;white-space:nowrap}
+.rpt-days th.dcol,.rpt-days td.dcol{text-align:center;padding-left:2px;padding-right:2px;width:62px}
+.rpt-days th.dcol small{display:block;font-size:7.5px;font-weight:600;text-transform:none;letter-spacing:0;white-space:nowrap}
+.rpt-days .rs{padding:1px 5px;font-size:8.5px}
+.rpt-days-6 th.dcol,.rpt-days-6 td.dcol,.rpt-days-7 th.dcol,.rpt-days-7 td.dcol{width:52px}
+.rpt-days-6 .rs,.rpt-days-7 .rs{padding:1px 3px;font-size:7.5px}
+.rpt-days .rs-none{color:var(--muted)}
+.rpt-days th.dat,.rpt-days td.dat{width:58px;white-space:normal}
+.dg-groups .iw-range{margin:-4px 0 4px}
+.dg-groups .iw-empty{margin:6px 0}
+.rpt-daynote{font-size:8.5px;color:var(--muted);margin:4px 0 0}
 .rpt-sec{margin:0 0 14px}
 .rpt thead{display:table-header-group}
 .rpt tr{break-inside:avoid;page-break-inside:avoid}
@@ -1011,6 +1023,10 @@ span.logo[data-logo]>svg{width:100%;height:100%;display:block}
 /* Settings → Sync: photo status + “Re-download photos from Drive” */
 .sync-dl dd.sync-photos-dd{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
 .sync-dl dd.sync-photos-dd .btn{white-space:normal;text-align:left;max-width:100%}
+
+/* sort: Name A–Z / Unmarked first (marking page + History day list) */
+.sort-sel{min-width:0;max-width:100%}
+#h-sort{flex:0 1 180px;min-width:120px}
 
 </style>
 </head>
@@ -1222,7 +1238,7 @@ const sortedStudents = () => S.students.slice().sort(byName);
 function groups() { const m = new Map(); S.students.forEach((s) => { const g = (s.group || '').trim(); if (g) m.set(g, (m.get(g) || 0) + 1); }); return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0], undefined, { numeric: true })); }
 const ungroupedCount = () => S.students.filter((s) => !s.group).length;
 function inGroup(s, g) { if (!g) return true; if (g === '__none') return !s.group; return (s.group || '') === g; }
-const groupLabel = (g) => (g === '__none' ? 'Ungrouped' : g);
+const groupLabel = (g) => (g === '__none' ? 'No institute' : g);
 const isSessionDay = (i) => S.settings.sessionDays.includes(weekday(i));
 function hasSession(d) { const s = S.sessions[d]; return !!(s && (s.taken || Object.keys(s.records).length)); }
 const isTaken = (d) => !!(S.sessions[d] && S.sessions[d].taken);
@@ -1623,7 +1639,7 @@ const COLS = {
   name: /^(full ?names?|names?|student( names?)?|students|participants?( names?)?|learners?( names?)?|trainees?( names?)?|candidates?( names?)?|name of (student|participant|learner|trainee)|beneficiary( name)?)$/,
   first: /^(first ?names?|given ?names?|forenames?|first|other ?names?)$/,
   last: /^(last ?names?|surnames?|family ?names?|last)$/,
-  group: /^(groups?|cohorts?|teams?|class(es)?|tracks?|squads?|sections?|batch(es)?|streams?|group ?names?|pods?|course|program(me)?)$/,
+  group: /^(institutes?|institutions?|schools?|(institute|institution|school) ?names?|name of (the )?(institute|institution|school)|groups?|cohorts?|teams?|class(es)?|tracks?|squads?|sections?|batch(es)?|streams?|group ?names?|pods?|course|program(me)?)$/,
   sid: /^(id|ids|student ?id|participant ?id|reg(istration)?( ?(no|number|#|id))?|index( ?(no|number))?|matric(ulation)?( ?(no|number))?|roll( ?(no|number))?|no|s ?n|#|admission ?(no|number))$/,
   phone: /^(phone|phones|phone ?(no|number)|mobile|mobile ?(no|number)|tel|telephone|whats ?app( ?(no|number))?|contact|contact ?(no|number)|cell)$/,
   email: /^(e ?mail|e ?mail ?address|email ?id)$/,
@@ -1635,8 +1651,8 @@ function detectColumns(header) {
   H.forEach((k, i) => { for (const f in COLS) if (map[f] === -1 && COLS[f].test(k)) { map[f] = i; break; } });
   const taken = () => new Set(Object.values(map).filter((v) => v >= 0));
   const fuzzy = (f, re, not) => { if (map[f] !== -1) return; const t = taken(); const i = H.findIndex((k, j) => !t.has(j) && re.test(k) && !(not && not.test(k))); if (i >= 0) map[f] = i; };
-  fuzzy('name', /name/, /first|last|sur|given|group|team|school|parent|guardian|mother|father|user|file|course|class/);
-  fuzzy('group', /group|cohort|team|track|class|batch|squad/);
+  fuzzy('name', /name/, /first|last|sur|given|group|team|school|institut|parent|guardian|mother|father|user|file|course|class/);
+  fuzzy('group', /institut|school|group|cohort|team|track|class|batch|squad/);
   fuzzy('email', /mail/);
   fuzzy('phone', /phone|mobile|tel|whats|contact/);
   fuzzy('sid', /\bid\b|reg|index|matric|admission/);
@@ -1679,7 +1695,7 @@ function buildRecords(rows, hdrIdx, map) {
   });
   return out;
 }
-const SAMPLE_CSV = `Full Name,Group,Student ID,Phone,Email
+const SAMPLE_CSV = `Full Name,Institute,Student ID,Phone,Email
 Ama Sample,Web Dev A,AGC-001,+233 20 000 0001,ama.sample@example.com
 Akosua Demo,Web Dev A,AGC-002,+233 20 000 0002,akosua.demo@example.com
 Chiamaka Example,Web Dev A,AGC-003,+233 20 000 0003,chiamaka.example@example.com
@@ -2118,12 +2134,14 @@ function renderBanner(r) {
   b.innerHTML = `<div class="banner" role="alert">${icon('bell')}<p>${hasSession(t) ? `Today's attendance is in progress — ${marked} of ${S.students.length} marked.` : `Today's attendance hasn't been taken yet${late ? `<span class="hide-phone"> (reminder set for ${esc(S.settings.reminderTime)})</span>` : ''}.`}</p>
     <a class="btn btn-primary btn-sm" href="#/mark/${t}">${hasSession(t) ? 'Continue' : 'Take attendance'}</a><button class="icon-btn" style="width:40px;height:40px" data-act="dismissBanner" aria-label="Dismiss">${icon('x', 'sm')}</button></div>`;
 }
+let lastViewName = '';
 function render() {
   const r = route();
   applyBrand();
   renderShell(r);
   const v = $('#view');
   const views = { dashboard: viewDashboard, mark: viewMark, students: viewStudents, student: viewStudent, history: viewHistory, reports: viewReports, settings: viewSettings };
+  if (r.name !== lastViewName) { M.snap = null; HV.snap = null; lastViewName = r.name; } // fresh "Unmarked first" order each time a page is opened
   (views[r.name] || viewDashboard)(v, r.args);
   if (S.settings.logo) brandDecorate(v);
 }
@@ -2135,7 +2153,7 @@ function emptyStartHTML() {
     ${S.settings.logo ? `<span class="logo custom es-logo">${brandMarkHTML()}</span>` : emptyArt()}
     <h2>Welcome to ${esc(S.settings.name)}</h2>
     <p>Import your participant list to get started. Upload a CSV or Excel (.xlsx) file, or simply paste names — one per line.</p>
-    <div class="steps"><div><b>1</b>Import or add your students (with optional groups).</div><div><b>2</b>Tap <b style="background:var(--brand-2)">✓</b> <strong>Take attendance</strong> when class starts.</div><div><b>3</b>Review history, trends and export reports anytime.</div></div>
+    <div class="steps"><div><b>1</b>Import or add your students (with optional institutes).</div><div><b>2</b>Tap <b style="background:var(--brand-2)">✓</b> <strong>Take attendance</strong> when class starts.</div><div><b>3</b>Review history, trends and export reports anytime.</div></div>
     <div class="row" style="justify-content:center">
       <button class="btn btn-primary btn-lg" data-act="openImport">${icon('upload')} Import participant list</button>
       <button class="btn btn-lg" data-act="addStudent">${icon('plus')} Add a student</button>
@@ -2191,7 +2209,7 @@ function viewDashboard(v) {
     <div class="mark-cta">${cta}</div>
   </section>
   <section class="grid g4 stat-grid">
-    <div class="card stat"><span class="k">${icon('users', 'sm')} Students</span><span class="v">${S.students.length}</span><span class="s">${plural(gs.length, 'group')}${ungroupedCount() && gs.length ? ` · ${ungroupedCount()} ungrouped` : ''}</span></div>
+    <div class="card stat"><span class="k">${icon('users', 'sm')} Students</span><span class="v">${S.students.length}</span><span class="s">${plural(gs.length, 'institute')}${ungroupedCount() && gs.length ? ` · ${ungroupedCount()} unassigned` : ''}</span></div>
     <div class="card stat"><span class="k">${icon('cal', 'sm')} Sessions held</span><span class="v">${dates.length}</span><span class="s">${dates.length ? 'Since ' + fmtDate(dates[0], 'short') : 'None yet'}</span></div>
     <div class="card stat"><span class="k">${icon('trend', 'sm')} Overall rate</span><span class="v"><span class="${rateCls(ov)}" style="color:var(--c)">${pct(ov)}</span></span><span class="s">Present + late ÷ expected</span></div>
     <div class="card stat"><span class="k">${icon('zap', 'sm')} Today</span><span class="v">${started ? `<span class="${rateCls(c.rate)}" style="color:var(--c)">${pct(c.rate)}</span>` : '—'}</span><span class="s">${started ? `${c.P} present · ${c.L} late · ${c.A} absent${c.unmarked && !taken ? ` · ${c.unmarked} unmarked` : ''}` : 'Not taken yet'}</span></div>
@@ -2202,9 +2220,7 @@ function viewDashboard(v) {
       ${low.length ? `<div class="list">${low.slice(0, 8).map((x) => `<a class="list-item clickable" style="text-decoration:none;color:inherit" href="#/student/${x.s.id}">${avatar(x.s)}<div class="body"><div class="nm">${esc(x.s.name)}</div><div class="meta">${x.c.attended}/${x.c.denom} sessions · ${x.c.A} absences</div></div>${ratePill(x.c.rate)}</a>`).join('')}</div>${low.length > 8 ? `<a class="link" href="#/students">+${low.length - 8} more</a>` : ''}`
       : `<div class="empty-state" style="padding:18px"><div style="font-size:2rem">🌟</div><p>${dates.length ? `No one is below ${S.settings.lowThreshold}% — wonderful!` : 'Low-attendance alerts appear after a few sessions.'}</p></div>`}
     </div>
-    <div class="card dg-groups"><div class="card-h"><h2>${icon('tag')} Groups</h2><a class="link small" href="#/students">Manage</a></div>
-      ${gs.length ? gs.map(([g, n]) => { const r = overall(dates) != null ? groupRate(g, dates) : null; return `<div class="bar-row"><div><b>${esc(g)}</b><div class="muted small">${plural(n, 'student')}</div></div><div class="bar"><i style="width:${r == null ? 0 : Math.round(r * 100)}%"></i></div><span class="pill ${rateCls(r)}">${pct(r)}</span></div>`; }).join('') : `<p class="muted">No groups yet. Add a Group column when importing, or assign groups on the Students page.</p>`}
-    </div>
+    <div class="card dg-groups"><div class="card-h"><h2>${icon('tag')} Institutes this week</h2><a class="link small" href="#/students">Manage</a></div>${instWeekHTML(gs, t)}</div>
     <div class="card dg-reasons"><div class="card-h"><h2>${icon('note')} Absence reasons</h2><span class="muted small">All sessions</span></div>${(() => { const rs = reasonStats(); return reasonBarsHTML(rs, dates.length ? 'No reasons recorded yet. When you mark someone absent or excused you can tap a quick reason.' : 'Reasons appear after a few sessions.') + (rs.flags.length ? `<div class="rs-flags"><h3>${icon('alert', 'sm')} Repeated reasons</h3>${rs.flags.slice(0, 5).map((f) => `<a class="list-item clickable" href="#/student/${f.s.id}">${avatar(f.s)}<div class="body"><div class="nm">${esc(f.s.name)}</div><div class="meta flag-meta">${flagPill(f)} <span>last ${fmtDate(f.last, 'short')}</span></div></div></a>`).join('')}${rs.flags.length > 5 ? `<p class="muted small" style="margin:4px 0 0">+${rs.flags.length - 5} more</p>` : ''}</div>` : ''); })()}</div>
     <div class="card dg-recent"><div class="card-h"><h2>${icon('cal')} Recent sessions</h2><a class="link small" href="#/history">All history</a></div>
       ${recent.length ? `<div class="list recent-list">${recent.map((d) => { const s = daySummary(d); return `<a class="list-item clickable" style="text-decoration:none;color:inherit" href="#/history/${d}"><div class="body"><div class="nm">${fmtDate(d)}${d === t ? ' <span class="badge">Today</span>' : ''}</div><div class="meta">${s.P} present · ${s.L} late · ${s.E} excused · ${s.A} absent</div></div>${ratePill(s.rate)}</a>`; }).join('')}</div>` : `<p class="muted">No sessions recorded yet.</p>`}
@@ -2213,12 +2229,35 @@ function viewDashboard(v) {
   fitChart();
 }
 function fitChart() { const b = $('#chart-box'); if (b && b.clientWidth) b.innerHTML = trendChart(sessionDates(), b.clientWidth); }
+/* Dashboard: each institute's attendance rate for the current Monday–Sunday week, highest first (+ "No institute") */
+function instWeekHTML(gs, t) {
+  if (!gs.length) return `<p class="muted">No institutes yet. Add an Institute column when importing, or assign institutes on the Students page.</p>`;
+  const [from, to] = weekRange(t), wd = sessionDates().filter((d) => d >= from && d <= to);
+  const sub = `<p class="muted small iw-range">${fmtDate(from, 'dm')} – ${fmtDate(to, 'dm')} · ${plural(wd.length, 'session')}</p>`;
+  if (!wd.length) return sub + `<p class="muted iw-empty">No sessions this week yet.</p>`;
+  const rows = [...gs.map(([g, n]) => ({ g, key: g, n })), ...(ungroupedCount() ? [{ g: 'No institute', key: '__none', n: ungroupedCount() }] : [])].map((x) => ({ ...x, r: groupRate(x.key, wd) }));
+  rows.sort((a, b) => (b.r == null ? -1 : b.r) - (a.r == null ? -1 : a.r) || a.g.localeCompare(b.g, undefined, { numeric: true }));
+  return sub + rows.map((x) => `<div class="bar-row iw-row"><div><b>${esc(x.g)}</b><div class="muted small">${plural(x.n, 'student')}</div></div><div class="bar"><i style="width:${x.r == null ? 0 : Math.round(x.r * 100)}%"></i></div><span class="pill ${rateCls(x.r)}">${pct(x.r)}</span></div>`).join('');
+}
 function groupRate(g, dates) { let a = 0, n = 0; S.students.filter((s) => inGroup(s, g)).forEach((s) => { const c = studentStats(s, dates); a += c.attended; n += c.denom; }); return n ? a / n : null; }
 
 /* ============ mark attendance ============ */
-const M = { date: null, group: '', mode: localStorage.getItem('agcci-mode') || 'cards', idx: 0, undo: [], showDone: false, q: '' };
-const markList = () => S.students.filter((s) => inGroup(s, M.group)).sort(byName);
+const M = { date: null, group: '', mode: localStorage.getItem('agcci-mode') || 'cards', idx: 0, undo: [], showDone: false, q: '', sort: sortPref('agcci-mark-sort'), snap: null };
+/* Sort: "Name A–Z" or "Unmarked first". The unmarked-first order is a snapshot taken when the page opens or the date,
+   institute or sort changes (or on "Re-sort"), so rows and cards don't jump away while you are marking. */
+function sortPref(k) { try { return localStorage.getItem(k) === 'unmarked' ? 'unmarked' : 'name'; } catch (e) { return 'name'; } }
+function setSortPref(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* private mode */ } }
+function unmarkedFirst(list, d, box, key) {
+  if (!box.snap || box.snap.key !== key || list.some((s) => !box.snap.rank.has(s.id))) {
+    const u = list.filter((s) => !rawStatus(d, s.id)), m = list.filter((s) => rawStatus(d, s.id));
+    box.snap = { key, rank: new Map([...u, ...m].map((s, i) => [s.id, i])) };
+  }
+  const rk = box.snap.rank; return list.sort((a, b) => rk.get(a.id) - rk.get(b.id));
+}
+const sortSelectHTML = (id, cur) => `<select id="${id}" class="sort-sel" aria-label="Sort students"><option value="name" ${cur === 'name' ? 'selected' : ''}>Name A–Z</option><option value="unmarked" ${cur === 'unmarked' ? 'selected' : ''}>Unmarked first</option></select>`;
+const markList = () => { const l = S.students.filter((s) => inGroup(s, M.group)).sort(byName); return M.sort === 'unmarked' ? unmarkedFirst(l, M.date, M, M.date + '|' + M.group) : l; };
 function resetMarkPosition() {
+  M.snap = null;
   const list = markList();
   const i = list.findIndex((s) => !rawStatus(M.date, s.id));
   M.idx = i < 0 ? 0 : i; M.showDone = list.length > 0 && i < 0; M.undo = [];
@@ -2260,13 +2299,14 @@ function viewMark(v, args) {
     <div class="mark-layout">
     <aside class="mark-side">
     <details class="card mark-opts" id="mark-opts" ${open ? 'open' : ''}>
-      <summary class="mark-bar" aria-label="Date, group and bulk options">${icon('cal', 'sm')}<span class="mb-text"><b>${fmtDate(d, 'dm')}</b>${d === t ? ' · Today' : ''} · ${esc(M.group ? groupLabel(M.group) : 'All groups')}${!isSessionDay(d) || future ? ' · <span style="color:var(--l)">⚠</span>' : ''}</span><span class="mb-chev" aria-hidden="true">▾</span></summary>
+      <summary class="mark-bar" aria-label="Date, institute and bulk options">${icon('cal', 'sm')}<span class="mb-text"><b>${fmtDate(d, 'dm')}</b>${d === t ? ' · Today' : ''} · ${esc(M.group ? groupLabel(M.group) : 'All institutes')}${!isSessionDay(d) || future ? ' · <span style="color:var(--l)">⚠</span>' : ''}</span><span class="mb-chev" aria-hidden="true">▾</span></summary>
       <div class="opts-body">
       <div class="short-seg">${faceBtn ? `<div class="mark-head-acts">${faceBtn}${modeSeg}</div>` : modeSeg}</div>
       <div class="mark-top">
         <label class="sr-only" for="mark-date">Date</label>
         <div class="date-nav"><button class="icon-btn" data-act="markShift" data-n="-1" aria-label="Previous day">${icon('left')}</button><input type="date" id="mark-date" value="${d}" max="${addDays(t, 60)}"><button class="icon-btn" data-act="markShift" data-n="1" aria-label="Next day">${icon('right')}</button>${d !== t ? `<button class="btn btn-sm btn-soft" data-act="markToday">Today</button>` : ''}</div>
-        <select id="mark-group" class="grp-sel" aria-label="Filter by group"><option value="">All groups (${S.students.length})</option>${gs.map(([g, n]) => `<option value="${esc(g)}" ${M.group === g ? 'selected' : ''}>${esc(g)} (${n})</option>`).join('')}${gs.length && ungroupedCount() ? `<option value="__none" ${M.group === '__none' ? 'selected' : ''}>Ungrouped (${ungroupedCount()})</option>` : ''}</select>
+        <select id="mark-group" class="grp-sel" aria-label="Filter by institute"><option value="">All institutes (${S.students.length})</option>${gs.map(([g, n]) => `<option value="${esc(g)}" ${M.group === g ? 'selected' : ''}>${esc(g)} (${n})</option>`).join('')}${gs.length && ungroupedCount() ? `<option value="__none" ${M.group === '__none' ? 'selected' : ''}>No institute (${ungroupedCount()})</option>` : ''}</select>
+        ${sortSelectHTML('mark-sort', M.sort)}
         <div class="bulk-row"><button class="btn btn-sm" data-act="bulkMark" data-st="P">${icon('check', 'sm')} <span>Mark ${esc(bulkLabel)} present</span></button>
         <button class="btn btn-sm" data-act="bulkMark" data-st="A">${icon('x', 'sm')} <span>Mark ${M.group ? esc(bulkLabel) + ' absent' : 'remaining absent'}</span></button></div>
       </div>
@@ -2281,13 +2321,14 @@ function viewMark(v, args) {
   </div>`;
   $('#mark-date').onchange = (e) => { if (validISO(e.target.value)) go('#/mark/' + e.target.value); };
   $('#mark-group').onchange = (e) => { M.group = e.target.value; resetMarkPosition(); render(); };
+  $('#mark-sort').onchange = (e) => { M.sort = e.target.value === 'unmarked' ? 'unmarked' : 'name'; setSortPref('agcci-mark-sort', M.sort); resetMarkPosition(); render(); };
   const det = $('#mark-opts'); det.addEventListener('toggle', () => { if (M.compact) M.optsOpen = det.open; });
   if (M.mode === 'cards') bindSwipe(); else bindListSearch();
 }
 function refreshMark() { const b = $('#mark-body'); if (!b) return; b.innerHTML = M.mode === 'cards' ? cardsHTML() : listHTML(); $('#mark-counts').innerHTML = countsHTML(); if (M.mode === 'cards') bindSwipe(); else bindListSearch(); }
 function cardsHTML() {
   const list = markList();
-  if (!list.length) return `<div class="card empty-state"><p>No students in this group.</p></div>`;
+  if (!list.length) return `<div class="card empty-state"><p>No students in this institute.</p></div>`;
   const c = markCounts();
   if (M.showDone) {
     return `<div class="stage">${stripVisible() ? reasonStripHTML() : ''}<div class="card done-card fade-in"><div class="big">🎉</div><h2 style="margin:10px 0 6px">All ${plural(list.length, 'student')} marked${M.group ? ' in ' + esc(groupLabel(M.group)) : ''}!</h2>
@@ -2354,16 +2395,16 @@ function rowHTML(s, d, opts = {}) {
   const cur = r || (opts.showDefault ? e : null), x = markExtra(d, s.id);
   const hist = opts.act === 'histMark', open = r && needsReason(r) && (hist ? HV.reasonRow : M.reasonRow) === s.id;
   return `<div class="srow ${open ? 'has-reason' : ''}" data-sid="${s.id}" data-name="${esc(s.name.toLowerCase())}">
-    ${avatar(s)}<a class="body" href="#/student/${s.id}" title="Open ${esc(s.name)}'s profile"><div class="nm">${esc(s.name)}</div><div class="meta">${s.group ? esc(s.group) : 'No group'}${!r && e === 'A' ? ' · <span class="def-tag">absent (not marked)</span>' : !r && hasSession(d) && (isTaken(d) || d < todayISO()) ? ' · not enrolled yet' : !r ? ' · unmarked' : ''}${x.reason ? ` · <span class="why">${esc(x.reason)}</span>` : ''}${x.note ? ` · <span class="rnote">“${esc(x.note)}”</span>` : ''}${r && x.via === 'face' ? ` · <span class="via-tag">${icon('face', 'sm')}via face match</span>` : ''}</div></a>
+    ${avatar(s)}<a class="body" href="#/student/${s.id}" title="Open ${esc(s.name)}'s profile"><div class="nm">${esc(s.name)}</div><div class="meta">${s.group ? esc(s.group) : 'No institute'}${!r && e === 'A' ? ' · <span class="def-tag">absent (not marked)</span>' : !r && hasSession(d) && (isTaken(d) || d < todayISO()) ? ' · not enrolled yet' : !r ? ' · unmarked' : ''}${x.reason ? ` · <span class="why">${esc(x.reason)}</span>` : ''}${x.note ? ` · <span class="rnote">“${esc(x.note)}”</span>` : ''}${r && x.via === 'face' ? ` · <span class="via-tag">${icon('face', 'sm')}via face match</span>` : ''}</div></a>
     <div class="sseg" role="group" aria-label="Status for ${esc(s.name)}">${shown.map((k) => `<button class="${STATUS[k].cls} ${cur === k && r ? 'on' : ''}" data-act="${opts.act || 'rowMark'}" data-sid="${s.id}" data-st="${k}" title="${STATUS[k].label}" aria-pressed="${r === k}">${k}</button>`).join('')}<button class="rec ${x.reason || x.note ? 'has' : ''}" data-act="recEdit" data-d="${d}" data-sid="${s.id}" title="Reason &amp; note" aria-label="Reason and note for ${esc(s.name)}">${icon('note', 'sm')}</button></div>
     ${open ? reasonRowHTML(d, s.id, hist ? 'hist' : 'row') : ''}
   </div>`;
 }
 function listHTML() {
   const list = markList();
-  if (!list.length) return `<div class="card empty-state"><p>No students in this group.</p></div>`;
+  if (!list.length) return `<div class="card empty-state"><p>No students in this institute.</p></div>`;
   return `<div class="card" style="padding:8px 8px 4px">
-    <div style="padding:6px 6px 10px" class="row"><input type="search" id="mark-q" placeholder="Filter this list…" style="min-width:160px" value="${esc(M.q)}" class="grow" aria-label="Filter list"><span class="muted small hint-fine">Tap a letter to mark · tap again to clear</span></div>
+    <div style="padding:6px 6px 10px" class="row"><input type="search" id="mark-q" placeholder="Filter this list…" style="min-width:160px" value="${esc(M.q)}" class="grow" aria-label="Filter list">${M.sort === 'unmarked' ? `<button type="button" class="btn btn-sm btn-ghost" data-act="markResort" title="Move students you have marked to the bottom">${icon('refresh', 'sm')} Re-sort</button>` : ''}<span class="muted small hint-fine">Tap a letter to mark · tap again to clear</span></div>
     <div id="mark-rows">${list.map((s) => rowHTML(s, M.date)).join('')}</div></div>
     <div class="sticky-actions"><button class="btn" data-act="bulkMark" data-st="P">${icon('check', 'sm')} Mark all present</button><button class="btn btn-primary" data-act="finish">${icon('check', 'sm')} Finish &amp; save</button></div>`;
 }
@@ -2406,20 +2447,20 @@ function viewStudents(v) {
   const gs = groups(), dates = sessionDates();
   if (SV.group && SV.group !== '__none' && !gs.some(([g]) => g === SV.group)) SV.group = '';
   v.innerHTML = `<div class="fade-in">
-    <div class="page-head"><div><h1>Students</h1><p class="muted">${plural(S.students.length, 'participant')} · ${plural(gs.length, 'group')}</p></div>
+    <div class="page-head"><div><h1>Students</h1><p class="muted">${plural(S.students.length, 'participant')} · ${plural(gs.length, 'institute')}</p></div>
       <div class="row"><button class="btn" data-act="openImport">${icon('upload', 'sm')} Import</button><button class="btn" data-act="bulkPhotos">${icon('camera', 'sm')} Photos</button><button class="btn btn-primary" data-act="addStudent">${icon('plus', 'sm')} Add student</button></div></div>
-    <details class="panel"><summary>${icon('tag', 'sm')} Groups <span class="badge">${gs.length}</span><span class="muted small hide-phone" style="font-weight:500">Rename, and mark a whole group for today</span></summary><div class="inner">
+    <details class="panel"><summary>${icon('tag', 'sm')} Institutes <span class="badge">${gs.length}</span><span class="muted small hide-phone" style="font-weight:500">Rename, and mark a whole institute for today</span></summary><div class="inner">
       ${gs.length ? gs.map(([g, n]) => `<div class="grp-row"><span class="gname">${esc(g)}</span><span class="muted small">${plural(n, 'student')} · ${pct(groupRate(g, dates))}</span><span class="grow"></span>
         <button class="btn btn-sm st-p" style="color:var(--c)" data-act="groupToday" data-g="${esc(g)}" data-st="P">${icon('check', 'sm')} All present today</button>
         <button class="btn btn-sm st-a" style="color:var(--c)" data-act="groupToday" data-g="${esc(g)}" data-st="A">${icon('x', 'sm')} All absent today</button>
         <button class="btn btn-sm btn-ghost" data-act="renameGroup" data-g="${esc(g)}">${icon('edit', 'sm')} Rename</button>
-        <button class="btn btn-sm btn-ghost" data-act="deleteGroup" data-g="${esc(g)}" aria-label="Remove group">${icon('trash', 'sm')}</button></div>`).join('') : `<p class="muted small">No groups yet. Select students below and use “Assign group”, or add a group when editing a student.</p>`}
+        <button class="btn btn-sm btn-ghost" data-act="deleteGroup" data-g="${esc(g)}" aria-label="Remove institute">${icon('trash', 'sm')}</button></div>`).join('') : `<p class="muted small">No institutes yet. Select students below and use “Assign institute”, or add an institute when editing a student.</p>`}
     </div></details>
     <div class="row" style="margin-bottom:12px"><input type="search" id="st-q" class="grow" placeholder="Search by name, ID, phone or email…" value="${esc(SV.q)}" aria-label="Search students" style="min-width:200px"></div>
     <div class="chips" style="margin-bottom:14px" id="st-chips">
       <button class="chip-btn ${!SV.group ? 'on' : ''}" data-act="stGroup" data-g="">All <span class="n">${S.students.length}</span></button>
       ${gs.map(([g, n]) => `<button class="chip-btn ${SV.group === g ? 'on' : ''}" data-act="stGroup" data-g="${esc(g)}">${esc(g)} <span class="n">${n}</span></button>`).join('')}
-      ${ungroupedCount() && gs.length ? `<button class="chip-btn ${SV.group === '__none' ? 'on' : ''}" data-act="stGroup" data-g="__none">Ungrouped <span class="n">${ungroupedCount()}</span></button>` : ''}
+      ${ungroupedCount() && gs.length ? `<button class="chip-btn ${SV.group === '__none' ? 'on' : ''}" data-act="stGroup" data-g="__none">No institute <span class="n">${ungroupedCount()}</span></button>` : ''}
     </div>
     <div id="selbar"></div>
     <div class="card" style="padding:6px 10px"><div class="list stu-list" id="st-list"></div></div>
@@ -2434,7 +2475,7 @@ function drawStudentList() {
   el.innerHTML = list.length ? `<label class="list-item sel-all"><span class="chk-wrap"><input type="checkbox" class="check" data-act="selAll" ${list.every((s) => SV.sel.has(s.id)) ? 'checked' : ''}></span><span class="muted small">Select all ${list.length} shown</span></label>` + list.map((s) => {
     const c = studentStats(s, dates), ts = effStatus(t, s) || rawStatus(t, s.id);
     return `<div class="list-item stu-row"><label class="chk-wrap"><input type="checkbox" class="check" data-act="selOne" data-id="${s.id}" ${SV.sel.has(s.id) ? 'checked' : ''} aria-label="Select ${esc(s.name)}"></label>
-      <a class="stu-link clickable" href="#/student/${s.id}">${avatar(s)}<div class="body"><div class="nm">${esc(s.name)}</div><div class="meta">${[s.group || 'No group', s.sid].filter(Boolean).map(esc).join(' · ')}</div></div>
+      <a class="stu-link clickable" href="#/student/${s.id}">${avatar(s)}<div class="body"><div class="nm">${esc(s.name)}</div><div class="meta">${[s.group || 'No institute', s.sid].filter(Boolean).map(esc).join(' · ')}</div></div>
       <span class="stu-pills"><span class="today-pill">${hasSession(t) ? stPill(ts) : ''}</span>${ratePill(c.rate)}</span></a>
       <button class="icon-btn" data-act="editStudent" data-id="${s.id}" aria-label="Edit ${esc(s.name)}">${icon('edit', 'sm')}</button></div>`;
   }).join('') : `<div class="empty-state" style="padding:24px"><p>No students match “${esc(SV.q)}”.</p></div>`;
@@ -2443,12 +2484,12 @@ function drawStudentList() {
 function drawSelBar() {
   const b = $('#selbar'); if (!b) return;
   [...SV.sel].forEach((id) => { if (!studentById(id)) SV.sel.delete(id); });
-  b.innerHTML = SV.sel.size ? `<div class="selbar"><b>${SV.sel.size} selected</b><span class="grow"></span><button class="btn btn-sm" data-act="assignGroup">${icon('tag', 'sm')} Assign group</button><button class="btn btn-sm" data-act="removeSelected">${icon('trash', 'sm')} Remove</button><button class="btn btn-sm btn-ghost" style="color:#fff" data-act="clearSel">Clear</button></div>` : '';
+  b.innerHTML = SV.sel.size ? `<div class="selbar"><b>${SV.sel.size} selected</b><span class="grow"></span><button class="btn btn-sm" data-act="assignGroup">${icon('tag', 'sm')} Assign institute</button><button class="btn btn-sm" data-act="removeSelected">${icon('trash', 'sm')} Remove</button><button class="btn btn-sm btn-ghost" style="color:#fff" data-act="clearSel">Clear</button></div>` : '';
 }
 function studentForm(s = {}) {
   const gs = groups();
   return `${photoFieldHTML(s)}<label class="field">Full name *<input type="text" name="name" value="${esc(s.name || '')}" required autofocus autocomplete="off"></label>
-  <label class="field">Group <span class="field-hint">Type a new group or pick an existing one</span><input type="text" name="group" value="${esc(s.group || '')}" list="dl-groups" autocomplete="off"><datalist id="dl-groups">${gs.map(([g]) => `<option value="${esc(g)}">`).join('')}</datalist></label>
+  <label class="field">Institute <span class="field-hint">Type a new institute or pick an existing one</span><input type="text" name="group" value="${esc(s.group || '')}" list="dl-groups" autocomplete="off"><datalist id="dl-groups">${gs.map(([g]) => `<option value="${esc(g)}">`).join('')}</datalist></label>
   <div class="grid g2" style="gap:12px"><label class="field">Student ID<input type="text" name="sid" value="${esc(s.sid || '')}"></label><label class="field">Phone<input type="tel" name="phone" value="${esc(s.phone || '')}"></label></div>
   <label class="field">Email<input type="email" name="email" value="${esc(s.email || '')}"></label>
   <label class="field">Enrolled from <span class="field-hint">Unmarked sessions before this date aren't counted against her</span><input type="date" name="joined" value="${esc(s.joined && s.joined !== '2000-01-01' ? s.joined : '')}"></label>${faceConsentFieldHTML(s)}`;
@@ -2502,7 +2543,7 @@ async function removeStudents(ids) {
 function groupPrompt(title, value, okLabel) {
   return new Promise((resolve) => {
     let val = null;
-    openModal({ title: esc(title), body: `<label class="field">Group name<input type="text" id="gp-in" value="${esc(value || '')}" list="dl-g2" autofocus autocomplete="off"><datalist id="dl-g2">${groups().map(([g]) => `<option value="${esc(g)}">`).join('')}</datalist><span class="field-hint">Leave empty to remove from group</span></label>`,
+    openModal({ title: esc(title), body: `<label class="field">Institute name<input type="text" id="gp-in" value="${esc(value || '')}" list="dl-g2" autofocus autocomplete="off"><datalist id="dl-g2">${groups().map(([g]) => `<option value="${esc(g)}">`).join('')}</datalist><span class="field-hint">Leave empty to remove from the institute</span></label>`,
       foot: `<button class="btn btn-ghost" data-close>Cancel</button><button class="btn btn-primary" data-ok>${esc(okLabel)}</button>`,
       onMount(el, close) { const inp = el.querySelector('#gp-in'); const ok = () => { val = cleanName(inp.value); close(); }; el.querySelector('[data-ok]').onclick = ok; inp.onkeydown = (e) => { if (e.key === 'Enter') ok(); }; },
       onClose() { resolve(val); } });
@@ -2539,7 +2580,7 @@ function viewStudent(v, args) {
   v.innerHTML = `<div class="fade-in">
     <a class="btn btn-ghost btn-sm" href="#/students" style="margin-bottom:10px">${icon('left', 'sm')} Students</a>
     <div class="card" style="margin-bottom:16px"><div class="prof-head"><button type="button" class="prof-photo" data-act="${hasPhoto(s.id) ? 'zoomPhoto' : 'photoMenu'}" data-id="${s.id}" aria-label="${hasPhoto(s.id) ? 'Enlarge photo' : 'Add a photo'}">${avatar(s, 'xl')}<span class="pp-badge" aria-hidden="true">${icon('camera', 'sm')}</span></button><div class="info"><h1 id="prof-name">${esc(s.name)}</h1>
-      <div class="row" style="margin-top:6px">${s.group ? `<span class="badge">${icon('tag', 'sm')} ${esc(s.group)}</span>` : '<span class="badge">No group</span>'}${c.denom >= 3 && c.rate * 100 < S.settings.lowThreshold ? `<span class="pill rate-bad">${icon('alert', 'sm')} Low attendance</span>` : ''}${rs.flags.map(flagPill).join('')}</div>
+      <div class="row" style="margin-top:6px">${s.group ? `<span class="badge">${icon('tag', 'sm')} ${esc(s.group)}</span>` : '<span class="badge">No institute</span>'}${c.denom >= 3 && c.rate * 100 < S.settings.lowThreshold ? `<span class="pill rate-bad">${icon('alert', 'sm')} Low attendance</span>` : ''}${rs.flags.map(flagPill).join('')}</div>
       <div class="contact">${s.sid ? `<span>${icon('hash', 'sm')} ${esc(s.sid)}</span>` : ''}${s.phone ? `<span>${icon('phone', 'sm')} <a href="tel:${esc(s.phone.replace(/\s/g, ''))}">${esc(s.phone)}</a></span>` : ''}${s.email ? `<span>${icon('mail', 'sm')} <a href="mailto:${esc(s.email)}">${esc(s.email)}</a></span>` : ''}${s.joined && s.joined > '2000-01-01' ? `<span>${icon('cal', 'sm')} Enrolled ${fmtDate(s.joined, 'short')}</span>` : ''}</div></div>
       ${ringSVG(c.rate)}</div>
       <div class="row prof-actions" style="margin-top:14px"><button class="btn btn-sm" data-act="editStudent" data-id="${s.id}">${icon('edit', 'sm')} Edit details</button><button class="btn btn-sm" data-act="photoMenu" data-id="${s.id}" id="prof-photo-btn">${icon('camera', 'sm')} ${hasPhoto(s.id) ? 'Change photo' : 'Add photo'}</button><button class="btn btn-sm" data-act="studentReport" data-id="${s.id}" data-fmt="csv">${icon('download', 'sm')} Report CSV</button><button class="btn btn-sm" data-act="studentReport" data-id="${s.id}" data-fmt="xlsx">${icon('download', 'sm')} Report Excel</button><button class="btn btn-sm" data-act="studentReport" data-id="${s.id}" data-fmt="pdf">${icon('download', 'sm')} Report PDF</button><button class="btn btn-sm btn-ghost" style="color:var(--a)" data-act="removeOne" data-id="${s.id}">${icon('trash', 'sm')} Remove</button></div>
@@ -2594,7 +2635,7 @@ function openDayPicker(s, d) {
 }
 
 /* ============ history ============ */
-const HV = { date: null, group: '', q: '' };
+const HV = { date: null, group: '', q: '', sort: sortPref('agcci-hist-sort'), snap: null };
 function viewHistory(v, args) {
   const t = todayISO(), dates = sessionDates();
   if (validISO(args[0])) HV.date = args[0];
@@ -2623,18 +2664,19 @@ function viewHistory(v, args) {
     </div></div></div>`;
   $('#h-date').onchange = (e) => { if (validISO(e.target.value)) go('#/history/' + e.target.value); };
   const hs = $('#h-group'); if (hs) hs.onchange = () => { HV.group = hs.value; render(); };
+  const hso = $('#h-sort'); if (hso) hso.onchange = () => { HV.sort = hso.value === 'unmarked' ? 'unmarked' : 'name'; setSortPref('agcci-hist-sort', HV.sort); HV.snap = null; render(); };
   const q = $('#h-q'); if (q) { const ap = () => { HV.q = q.value; const tt = q.value.trim().toLowerCase(); $$('#h-rows .srow').forEach((r) => (r.style.display = !tt || r.dataset.name.includes(tt) ? '' : 'none')); }; q.oninput = ap; ap(); }
 }
 function dayDetailHTML(d, gs) {
   const c = daySummary(d, HV.group), all = daySummary(d), s = S.sessions[d];
-  const list = sortedStudents().filter((x) => inGroup(x, HV.group));
+  const l0 = sortedStudents().filter((x) => inGroup(x, HV.group)), list = HV.sort === 'unmarked' ? unmarkedFirst(l0, d, HV, d + '|' + HV.group) : l0;
   const pending = c.unmarked - c.defaulted;
   return `<div class="card" style="margin-bottom:14px"><div class="row" style="justify-content:space-between">
       <div class="counts" id="h-counts"><span class="count st-p">Present <b>${c.P}</b></span><span class="count st-l">Late <b>${c.L}</b></span><span class="count st-e">Excused <b>${c.E}</b></span><span class="count st-a">Absent <b>${c.A}</b></span>${pending > 0 ? `<span class="count st-u">${!s.taken && d >= todayISO() ? 'Pending' : 'Not enrolled'} <b>${pending}</b></span>` : ''}</div>
       <div style="text-align:right"><div style="font-size:1.8rem;font-weight:850" class="${rateCls(c.rate)}"><span style="color:var(--c)">${pct(c.rate)}</span></div><div class="muted small">${s.taken ? 'Saved ' + new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }).format(new Date(s.taken)) + ' GMT' : 'In progress'}</div></div></div>
       ${all.defaulted ? `<p class="small muted" style="margin:10px 0 0">${icon('alert', 'sm')} ${plural(all.defaulted, 'student')} not explicitly marked ${all.defaulted === 1 ? 'counts' : 'count'} as absent by default.</p>` : ''}
       <div class="row" style="margin-top:12px"><button class="btn btn-sm" data-act="exportDay" data-d="${d}" data-fmt="csv">${icon('download', 'sm')} CSV</button><button class="btn btn-sm" data-act="exportDay" data-d="${d}" data-fmt="xlsx">${icon('download', 'sm')} Excel</button><button class="btn btn-sm" data-act="exportDay" data-d="${d}" data-fmt="pdf">${icon('download', 'sm')} PDF</button><a class="btn btn-sm" href="#/mark/${d}">${icon('cards', 'sm')} Open in marking mode</a><span class="grow"></span><button class="btn btn-sm btn-ghost" style="color:var(--a)" data-act="deleteDay" data-d="${d}">${icon('trash', 'sm')} Delete day</button></div></div>
-    <div class="card" style="padding:8px 8px 4px"><div class="row" style="padding:6px 6px 10px"><input type="search" id="h-q" class="grow" style="flex:1 1 180px;min-width:0" placeholder="Search this day…" value="${esc(HV.q)}" aria-label="Search this day">${gs.length ? `<select id="h-group" aria-label="Filter group" style="flex:0 1 240px;min-width:120px"><option value="">All groups</option>${gs.map(([g]) => `<option ${HV.group === g ? 'selected' : ''} value="${esc(g)}">${esc(g)}</option>`).join('')}</select>` : ''}</div>
+    <div class="card" style="padding:8px 8px 4px"><div class="row" style="padding:6px 6px 10px"><input type="search" id="h-q" class="grow" style="flex:1 1 180px;min-width:0" placeholder="Search this day…" value="${esc(HV.q)}" aria-label="Search this day">${gs.length ? `<select id="h-group" aria-label="Filter by institute" style="flex:0 1 240px;min-width:120px"><option value="">All institutes</option>${gs.map(([g]) => `<option ${HV.group === g ? 'selected' : ''} value="${esc(g)}">${esc(g)}</option>`).join('')}</select>` : ''}${sortSelectHTML('h-sort', HV.sort)}</div>
       <div id="h-rows">${list.map((x) => rowHTML(x, d, { act: 'histMark' })).join('')}</div></div>`;
 }
 
@@ -2643,7 +2685,7 @@ const fileStamp = () => todayISO();
 const slug = () => ((S.settings.name.match(/\b[A-Z]/g) || []).join('') || 'agcci').toLowerCase();
 function exportDay(d, fmt) {
   if (!validISO(d) || !hasSession(d)) { toast('No attendance recorded for that date', { type: 'error' }); return; }
-  const rows = [['Date', 'Name', 'Group', 'Student ID', 'Phone', 'Email', 'Status', 'Reason', 'Note']];
+  const rows = [['Date', 'Name', 'Institute', 'Student ID', 'Phone', 'Email', 'Status', 'Reason', 'Note']];
   sortedStudents().forEach((s) => { const e = effStatus(d, s), r = rawStatus(d, s.id), x = markExtra(d, s.id); rows.push([d, s.name, s.group, s.sid, s.phone, s.email, e ? STATUS[e].label : 'Pending', x.reason || '', [x.note, e && !r ? 'Absent by default (not marked)' : !e ? 'Not marked yet' : '', r && x.via === 'face' ? 'via face match' : ''].filter(Boolean).join(' · ')]); });
   const c = daySummary(d), name = `${slug()}-attendance-${d}`;
   if (fmt === 'pdf') {
@@ -2661,7 +2703,7 @@ function exportDay(d, fmt) {
 }
 function matrixRows(from, to) {
   const dates = sessionDates().filter((d) => (!from || d >= from) && (!to || d <= to));
-  const rows = [['Name', 'Group', 'Student ID', ...dates, 'Present', 'Late', 'Excused', 'Absent', 'Attendance %']];
+  const rows = [['Name', 'Institute', 'Student ID', ...dates, 'Present', 'Late', 'Excused', 'Absent', 'Attendance %']];
   sortedStudents().forEach((s) => { const c = studentStats(s, dates); rows.push([s.name, s.group, s.sid, ...dates.map((d) => effStatus(d, s) || ''), c.P, c.L, c.E, c.A, c.rate == null ? '' : Math.round(c.rate * 1000) / 10]); });
   const o = overall(dates);
   rows.push(['Daily attendance %', '', '', ...dates.map((d) => { const r = daySummary(d).rate; return r == null ? '' : Math.round(r * 1000) / 10; }), '', '', '', '', o == null ? '' : Math.round(o * 1000) / 10]);
@@ -2679,7 +2721,7 @@ function exportMatrix(fmt, from, to) {
   toast(`Downloaded matrix: ${plural(S.students.length, 'student')} × ${plural(dates.length, 'session')}`, { type: 'success' });
 }
 function summaryRows() {
-  const rows = [['Name', 'Group', 'Student ID', 'Phone', 'Email', 'Sessions', 'Present', 'Late', 'Excused', 'Absent', 'Attendance %', 'Current streak', 'Best streak', 'Flag', 'Top absence reason', 'Notes']];
+  const rows = [['Name', 'Institute', 'Student ID', 'Phone', 'Email', 'Sessions', 'Present', 'Late', 'Excused', 'Absent', 'Attendance %', 'Current streak', 'Best streak', 'Flag', 'Top absence reason', 'Notes']];
   sortedStudents().forEach((s) => { const c = studentStats(s), rs = reasonStats([s]); rows.push([s.name, s.group, s.sid, s.phone, s.email, c.sessions, c.P, c.L, c.E, c.A, c.rate == null ? '' : Math.round(c.rate * 1000) / 10, c.streak, c.best, [c.denom >= 3 && c.rate * 100 < S.settings.lowThreshold ? 'Low attendance' : '', ...rs.flags.map((f) => `Repeated reason: ${f.reason} ×${f.n}`)].filter(Boolean).join('; '), rs.by.length ? `${rs.by[0][0]} (${rs.by[0][1]})` : '', studentNotes(s.id).length]); });
   return rows;
 }
@@ -2687,7 +2729,7 @@ function exportSummary(fmt) { const rows = summaryRows(), name = `${slug()}-stud
 function exportStudent(id, fmt) {
   const s = studentById(id); if (!s) return;
   const c = studentStats(s);
-  const info = [['Student', s.name], ['Group', s.group], ['Student ID', s.sid], ['Phone', s.phone], ['Email', s.email], ['Sessions', c.sessions], ['Present', c.P], ['Late', c.L], ['Excused', c.E], ['Absent', c.A], ['Attendance rate', pct(c.rate)], ['Current streak', c.streak], ['Best streak', c.best], ['Generated', `${todayISO()} ${nowHM()} (Africa/Accra)`]];
+  const info = [['Student', s.name], ['Institute', s.group], ['Student ID', s.sid], ['Phone', s.phone], ['Email', s.email], ['Sessions', c.sessions], ['Present', c.P], ['Late', c.L], ['Excused', c.E], ['Absent', c.A], ['Attendance rate', pct(c.rate)], ['Current streak', c.streak], ['Best streak', c.best], ['Generated', `${todayISO()} ${nowHM()} (Africa/Accra)`]];
   const rs = reasonStats([s]); info.splice(info.length - 1, 0, ['Absence reasons', rs.by.map(([r, n]) => `${r}: ${n}`).join(', ')], ['Repeated reasons', rs.flags.map((f) => `${f.reason} ×${f.n}`).join(', ')]);
   const hist = [['Date', 'Day', 'Status', 'Reason', 'Note'], ...c.history.map((h) => { const x = markExtra(h.d, s.id); return [h.d, DAYS[weekday(h.d)], STATUS[h.s].label, x.reason || '', [x.note, h.raw ? '' : 'Absent by default (not marked)', h.raw && x.via === 'face' ? 'via face match' : ''].filter(Boolean).join(' · ')]; })];
   const notes = [['Date', 'Note'], ...studentNotes(s.id).map((n) => [n.date, n.text])];
@@ -2698,7 +2740,7 @@ function exportStudent(id, fmt) {
   else download(name + '.csv', toCSV([[S.settings.name + ' — attendance report'], ...info, [], ...hist, [], ['Notes'], ...notes]));
   toast(`Downloaded report for ${s.name}`, { type: 'success' });
 }
-function exportRoster(fmt) { const rows = [['Name', 'Group', 'Student ID', 'Phone', 'Email'], ...sortedStudents().map((s) => [s.name, s.group, s.sid, s.phone, s.email])]; const n = `${slug()}-participants-${fileStamp()}`; if (fmt === 'pdf') return downloadDataPDF(n, { title: 'Participant list', subtitle: plural(S.students.length, 'student'), tables: [{ title: '', header: ['#', ...rows[0]], rows: rows.slice(1).map((r, i) => [i + 1, ...r]), num: [0], fixed: 2, boldCol: 1 }] }, 'Downloaded participant list'); if (fmt === 'xlsx') download(n + '.xlsx', makeXlsx([{ name: 'Participants', rows }])); else download(n + '.csv', toCSV(rows)); toast('Downloaded participant list', { type: 'success' }); }
+function exportRoster(fmt) { const rows = [['Name', 'Institute', 'Student ID', 'Phone', 'Email'], ...sortedStudents().map((s) => [s.name, s.group, s.sid, s.phone, s.email])]; const n = `${slug()}-participants-${fileStamp()}`; if (fmt === 'pdf') return downloadDataPDF(n, { title: 'Participant list', subtitle: plural(S.students.length, 'student'), tables: [{ title: '', header: ['#', ...rows[0]], rows: rows.slice(1).map((r, i) => [i + 1, ...r]), num: [0], fixed: 2, boldCol: 1 }] }, 'Downloaded participant list'); if (fmt === 'xlsx') download(n + '.xlsx', makeXlsx([{ name: 'Participants', rows }])); else download(n + '.csv', toCSV(rows)); toast('Downloaded participant list', { type: 'success' }); }
 async function writeBackup(withPhotos, withFace = false) {
   S.meta.lastBackup = Date.now(); save();
   const out = { app: 'agcci-attendance', exported: new Date().toISOString(), data: S };
@@ -2711,7 +2753,7 @@ async function writeBackup(withPhotos, withFace = false) {
 function backup() {
   const n = S.students.filter((s) => hasPhoto(s.id)).length, nf = Object.keys(faceForBackup().desc).length;
   if (!n && !nf) { writeBackup(false); return; }
-  openModal({ title: 'Download backup', body: `<p style="margin:0">A JSON file with all students, groups, attendance and settings.</p>
+  openModal({ title: 'Download backup', body: `<p style="margin:0">A JSON file with all students, institutes, attendance and settings.</p>
     ${n ? `<label class="switch"><input type="checkbox" id="bk-photos" checked> Include student photos <span class="field-hint">(${plural(n, 'photo')}, about ${fmtKB(photoBytes() * 1.37)})</span></label>
     <p class="muted small" style="margin:0">Leave photos out for a much smaller file (e.g. to share by e-mail). Photos stay on this device either way.</p>` : ''}
     ${nf ? `<label class="switch"><input type="checkbox" id="bk-face"> Include face data <span class="field-hint">(biometric · ${plural(nf, 'student')} with guardian consent)</span></label>
@@ -2762,7 +2804,7 @@ function viewReports(v) {
   bindPrintable();
 }
 function reasonLogRows() {
-  const rows = [['Date', 'Name', 'Group', 'Student ID', 'Type', 'Status', 'Reason', 'Note']];
+  const rows = [['Date', 'Name', 'Institute', 'Student ID', 'Type', 'Status', 'Reason', 'Note']];
   const list = [];
   sessionDates().forEach((d) => sortedStudents().forEach((s) => { const x = markExtra(d, s.id), st = rawStatus(d, s.id); if (x.reason || x.note) list.push([d, s.name, s.group, s.sid, 'Attendance', st ? STATUS[st].label : '', x.reason || '', x.note || '']); }));
   S.notes.forEach((n) => { const s = studentById(n.sid); if (s) list.push([n.date, s.name, s.group, s.sid, 'Profile note', '', '', n.text]); });
@@ -2772,8 +2814,8 @@ function reasonLogRows() {
 function exportReasons(fmt) {
   const rows = reasonLogRows(), name = `${slug()}-reasons-notes-${fileStamp()}`;
   if (fmt === 'pdf') { const rs = reasonStats(); return downloadDataPDF(name, { title: 'Absence reasons & notes', subtitle: plural(rows.length - 1, 'entry', 'entries'),
-    tables: [{ title: 'Reasons and notes', header: rows[0], rows: rows.slice(1), status: [5], boldCol: 1, empty: 'No reasons or notes recorded yet.' }, rs.by.length ? { title: 'Reason totals', header: ['Reason', 'Count'], rows: rs.by, num: [1] } : null, rs.flags.length ? { title: 'Repeated reasons', header: ['Name', 'Group', 'Reason', 'Times'], rows: rs.flags.map((f) => [f.s.name, f.s.group, f.reason, f.n]), num: [3] } : null] }, `Downloaded ${plural(rows.length - 1, 'entry', 'entries')}`); }
-  if (fmt === 'xlsx') { const rs = reasonStats(); download(name + '.xlsx', makeXlsx([{ name: 'Reasons and notes', rows }, { name: 'Reason totals', rows: [['Reason', 'Count'], ...rs.by] }, { name: 'Repeated reasons', rows: [['Name', 'Group', 'Reason', 'Times'], ...rs.flags.map((f) => [f.s.name, f.s.group, f.reason, f.n])] }])); }
+    tables: [{ title: 'Reasons and notes', header: rows[0], rows: rows.slice(1), status: [5], boldCol: 1, empty: 'No reasons or notes recorded yet.' }, rs.by.length ? { title: 'Reason totals', header: ['Reason', 'Count'], rows: rs.by, num: [1] } : null, rs.flags.length ? { title: 'Repeated reasons', header: ['Name', 'Institute', 'Reason', 'Times'], rows: rs.flags.map((f) => [f.s.name, f.s.group, f.reason, f.n]), num: [3] } : null] }, `Downloaded ${plural(rows.length - 1, 'entry', 'entries')}`); }
+  if (fmt === 'xlsx') { const rs = reasonStats(); download(name + '.xlsx', makeXlsx([{ name: 'Reasons and notes', rows }, { name: 'Reason totals', rows: [['Reason', 'Count'], ...rs.by] }, { name: 'Repeated reasons', rows: [['Name', 'Institute', 'Reason', 'Times'], ...rs.flags.map((f) => [f.s.name, f.s.group, f.reason, f.n])] }])); }
   else download(name + '.csv', toCSV(rows));
   toast(`Downloaded ${plural(rows.length - 1, 'entry', 'entries')}`, { type: 'success' });
 }
@@ -3009,6 +3051,18 @@ function aggregate(list, dates) {
   const t = { P: 0, L: 0, E: 0, A: 0 }; list.forEach((s) => dates.forEach((d) => { const e = effStatus(d, s); if (e) t[e]++; }));
   t.attended = t.P + t.L; t.denom = t.attended + t.A; t.rate = t.denom ? t.attended / t.denom : null; return t;
 }
+/* Weekly report "Day 1 … Day n" columns: every day of the Monday–Sunday week that is a regular session day
+   (Settings → session days, normally Mon–Fri) or has attendance recorded (e.g. an extra Saturday), in date order.
+   At most 7; if no session days are configured and nothing was recorded, Mon–Fri. */
+function weekDayList(from) {
+  const sd = (S.settings.sessionDays || []), out = [];
+  for (let i = 0; i < 7; i++) { const d = addDays(from, i); if (sd.includes(weekday(d)) || hasSession(d)) out.push(d); }
+  return out.length ? out : [0, 1, 2, 3, 4].map((i) => addDays(from, i));
+}
+const dayHead = (d, i) => ({ label: `Day ${i + 1}`, sub: fmtDate(d, 'dm').replace(',', '') });
+/* "Days attended": present + late (the rate rule) out of the session days recorded that week */
+const daysAtt = (m, r) => (m.dates.length ? `${r.c.attended} of ${m.dates.length}` : '—');
+const PLEA = (g) => `${g.P} present · ${g.L} late · ${g.E} excused · ${g.A} absent`;
 function reportModel(o = RP) {
   const all = sessionDates(), t = todayISO(), last = all.length ? all[all.length - 1] : t;
   const kind = RTYPES[o.type] ? o.type : 'week';
@@ -3024,13 +3078,14 @@ function reportModel(o = RP) {
   const stu = kind === 'student' ? studentById(o.sid) || sortedStudents()[0] : null;
   const students = stu ? [stu] : sortedStudents().filter((s) => inGroup(s, o.group));
   const th = S.settings.lowThreshold / 100;
-  const rows = students.map((s) => { const c = studentStats(s, dates); return { s, c, band: bandOf(c.rate), flags: reasonStats([s], dates).flags }; });
+  const weekDays = kind === 'week' ? weekDayList(from) : null;
+  const rows = students.map((s) => { const c = studentStats(s, dates); return { s, c, band: bandOf(c.rate), flags: reasonStats([s], dates).flags, ...(weekDays ? { days: weekDays.map((d) => effStatus(d, s)) } : {}) }; });
   const tot = aggregate(students, dates);
   const trendDates = kind === 'day' ? all.filter((d) => d <= to).slice(-10) : dates.length > 40 ? dates.slice(-40) : dates;
   const trend = trendDates.map((d) => ({ d, r: aggregate(students, [d]).rate }));
-  const gmap = new Map(); students.forEach((s) => { const g = s.group || 'Ungrouped'; if (!gmap.has(g)) gmap.set(g, []); gmap.get(g).push(s); });
+  const gmap = new Map(); students.forEach((s) => { const g = s.group || 'No institute'; if (!gmap.has(g)) gmap.set(g, []); gmap.get(g).push(s); });
   let groupRows = [...gmap.entries()].sort((a, b) => a[0].localeCompare(b[0], undefined, { numeric: true })).map(([g, l]) => ({ g, n: l.length, ...aggregate(l, dates) }));
-  if (stu) { const peers = S.students.filter((x) => (x.group || '') === (stu.group || '')); groupRows = [{ g: stu.name, n: 1, ...aggregate([stu], dates) }, ...(stu.group ? [{ g: stu.group + ' (group)', n: peers.length, ...aggregate(peers, dates) }] : []), { g: 'Whole programme', n: S.students.length, ...aggregate(S.students, dates) }]; }
+  if (stu) { const peers = S.students.filter((x) => (x.group || '') === (stu.group || '')); groupRows = [{ g: stu.name, n: 1, ...aggregate([stu], dates) }, ...(stu.group ? [{ g: stu.group + ' (institute)', n: peers.length, ...aggregate(peers, dates) }] : []), { g: 'Whole programme', n: S.students.length, ...aggregate(S.students, dates) }]; }
   const minDen = Math.min(3, Math.max(1, dates.length));
   const low = kind === 'day'
     ? rows.filter((r) => ['A'].includes(effStatus(from, r.s))).map((r) => ({ ...r, c: studentStats(r.s, all.filter((d) => d <= to)) })).filter((r) => r.c.denom >= 3 && r.c.rate < th).sort((a, b) => a.c.rate - b.c.rate)
@@ -3043,7 +3098,7 @@ function reportModel(o = RP) {
   const history = stu ? studentStats(stu, dates).history.map((h) => ({ ...h, ...markExtra(h.d, stu.id) })) : null;
   const now = new Date();
   return {
-    kind, from, to, dates, students, rows, tot, trend, groupRows, low, stu, day, history, notes, recNotes,
+    kind, from, to, dates, weekDays, students, rows, tot, trend, groupRows, low, stu, day, history, notes, recNotes,
     reasons: reasonStats(students, dates), threshold: S.settings.lowThreshold,
     title: S.settings.reportTitle || 'Attendance report', typeTitle, range: rangeText(from, to), org: S.settings.name, address: S.settings.orgAddress || '',
     group: kind === 'student' ? '' : o.group ? groupLabel(o.group) : '', photos: !!o.photos, withReasons: o.reasons !== false,
@@ -3079,14 +3134,18 @@ function reportHTML(m) {
   const statBoxes = m.kind === 'student'
     ? [stat('Sessions', m.rows[0].c.sessions), stat('Attendance rate', pct(T.rate), 'rb-' + bandOf(T.rate)), stat('Present', T.P, 'st-P'), stat('Late', T.L, 'st-L'), stat('Excused', T.E, 'st-E'), stat('Absent', T.A, 'st-A')]
     : [stat('Sessions held', m.dates.length), stat('Enrolled', m.students.length), stat('Average rate', pct(T.rate), 'rb-' + bandOf(T.rate)), stat('Present', T.P, 'st-P'), stat('Late', T.L, 'st-L'), stat('Excused', T.E, 'st-E'), stat('Absent', T.A, 'st-A')];
-  const groupTbl = `<table class="rpt-mini"><thead><tr><th>${m.kind === 'student' ? 'Compared with' : 'Group'}</th><th class="n">${m.kind === 'student' ? '' : 'Students'}</th><th class="n">P/L/E/A</th><th class="n">Rate</th></tr></thead><tbody>${m.groupRows.map((g) => `<tr><td>${esc(g.g)}</td><td class="n">${m.kind === 'student' ? '' : g.n}</td><td class="n">${g.P}/${g.L}/${g.E}/${g.A}</td><td class="n">${rptBadge(bandOf(g.rate), g.rate)}</td></tr>`).join('') || '<tr><td colspan="4">No students</td></tr>'}</tbody></table>`;
+  const wk = m.kind === 'week';
+  const groupTbl = wk ? `<table class="rpt-mini rpt-mini-wk"><thead><tr><th>Institute</th><th class="n">Students</th><th class="n">Rate</th></tr></thead><tbody>${m.groupRows.map((g) => `<tr><td><b>${esc(g.g)}</b><div class="sub">${PLEA(g)}</div></td><td class="n">${g.n}</td><td class="n">${rptBadge(bandOf(g.rate), g.rate)}</td></tr>`).join('') || '<tr><td colspan="3">No students</td></tr>'}</tbody></table>` : `<table class="rpt-mini"><thead><tr><th>${m.kind === 'student' ? 'Compared with' : 'Institute'}</th><th class="n">${m.kind === 'student' ? '' : 'Students'}</th><th class="n">P/L/E/A</th><th class="n">Rate</th></tr></thead><tbody>${m.groupRows.map((g) => `<tr><td>${esc(g.g)}</td><td class="n">${m.kind === 'student' ? '' : g.n}</td><td class="n">${g.P}/${g.L}/${g.E}/${g.A}</td><td class="n">${rptBadge(bandOf(g.rate), g.rate)}</td></tr>`).join('') || '<tr><td colspan="4">No students</td></tr>'}</tbody></table>`;
   let main;
   if (m.kind === 'day') {
-    main = `<section class="rpt-sec"><h2>Register · ${fmtDate(m.from, 'long')}</h2><table class="rpt-table rpt-reg"><thead><tr><th class="n">#</th>${m.photos ? '<th></th>' : ''}<th>Name</th><th>Group</th><th>ID</th><th>Status</th>${m.withReasons ? '<th>Reason</th><th>Note</th>' : ''}<th class="sig">Signature</th></tr></thead><tbody>${m.day.map((r, i) => `<tr><td class="n">${i + 1}</td>${rptPhoto(m, r.s)}<td class="nm">${esc(r.s.name)}</td><td>${esc(r.s.group || '—')}</td><td>${esc(r.s.sid || '')}</td><td>${rptSt(r.st)}</td>${m.withReasons ? `<td>${esc(r.reason)}</td><td class="note">${esc(r.note)}</td>` : ''}<td class="sig"></td></tr>`).join('')}</tbody></table></section>`;
+    main = `<section class="rpt-sec"><h2>Register · ${fmtDate(m.from, 'long')}</h2><table class="rpt-table rpt-reg"><thead><tr><th class="n">#</th>${m.photos ? '<th></th>' : ''}<th>Name</th><th>Institute</th><th>ID</th><th>Status</th>${m.withReasons ? '<th>Reason</th><th>Note</th>' : ''}<th class="sig">Signature</th></tr></thead><tbody>${m.day.map((r, i) => `<tr><td class="n">${i + 1}</td>${rptPhoto(m, r.s)}<td class="nm">${esc(r.s.name)}</td><td>${esc(r.s.group || '—')}</td><td>${esc(r.s.sid || '')}</td><td>${rptSt(r.st)}</td>${m.withReasons ? `<td>${esc(r.reason)}</td><td class="note">${esc(r.note)}</td>` : ''}<td class="sig"></td></tr>`).join('')}</tbody></table></section>`;
   } else if (m.kind === 'student') {
     main = `<section class="rpt-sec"><h2>Session history</h2><table class="rpt-table"><thead><tr><th>Date</th><th>Status</th>${m.withReasons ? '<th>Reason</th><th>Note</th>' : ''}</tr></thead><tbody>${m.history.map((h) => `<tr><td>${fmtDate(h.d)}</td><td>${rptSt(h.s)}${h.raw ? '' : ' <span class="muted">(not marked)</span>'}</td>${m.withReasons ? `<td>${esc(h.reason || '')}</td><td class="note">${esc(h.note || '')}</td>` : ''}</tr>`).join('') || '<tr><td colspan="4">No sessions in this period</td></tr>'}</tbody></table></section>`;
+  } else if (wk) {
+    const nd = m.weekDays.length;
+    main = `<section class="rpt-sec"><h2>Students</h2><table class="rpt-table rpt-days rpt-days-${nd}"><thead><tr>${m.photos ? '<th></th>' : ''}<th>Name</th><th>Institute</th>${m.weekDays.map((d, i) => { const h = dayHead(d, i); return `<th class="dcol">${h.label}<small>${h.sub}</small></th>`; }).join('')}<th class="n dat">Days attended</th><th class="n">Sessions</th><th class="n">Rate</th></tr></thead><tbody>${m.rows.map((r) => `<tr>${rptPhoto(m, r.s)}<td class="nm">${esc(r.s.name)}${r.s.sid ? `<div class="sub">${esc(r.s.sid)}</div>` : ''}</td><td>${esc(r.s.group || '—')}</td>${r.days.map((st) => `<td class="dcol">${st ? `<span class="rs rs-${st}">${STATUS[st].label}</span>` : '<span class="rs-none">—</span>'}</td>`).join('')}<td class="n dat"><b>${daysAtt(m, r)}</b></td><td class="n">${r.c.sessions}</td><td class="n">${rptBadge(r.band, r.c.rate)}</td></tr>`).join('') || `<tr><td colspan="${nd + 5 + (m.photos ? 1 : 0)}">No students</td></tr>`}</tbody></table><p class="rpt-daynote">Each day shows her status for that date; Days attended = present + late out of the session days recorded this week; “—” means no session was recorded that day that day (or not yet enrolled).</p></section>`;
   } else {
-    main = `<section class="rpt-sec"><h2>Students</h2><table class="rpt-table"><thead><tr>${m.photos ? '<th></th>' : ''}<th>Name</th><th>Group</th><th class="n">Sessions</th><th class="n">P</th><th class="n">L</th><th class="n">E</th><th class="n">A</th><th class="n">Rate</th></tr></thead><tbody>${m.rows.map((r) => `<tr>${rptPhoto(m, r.s)}<td class="nm">${esc(r.s.name)}${r.s.sid ? `<div class="sub">${esc(r.s.sid)}</div>` : ''}</td><td>${esc(r.s.group || '—')}</td><td class="n">${r.c.sessions}</td><td class="n">${r.c.P}</td><td class="n">${r.c.L}</td><td class="n">${r.c.E}</td><td class="n">${r.c.A}</td><td class="n">${rptBadge(r.band, r.c.rate)}</td></tr>`).join('') || '<tr><td colspan="9">No students</td></tr>'}</tbody></table></section>`;
+    main = `<section class="rpt-sec"><h2>Students</h2><table class="rpt-table"><thead><tr>${m.photos ? '<th></th>' : ''}<th>Name</th><th>Institute</th><th class="n">Sessions</th><th class="n">P</th><th class="n">L</th><th class="n">E</th><th class="n">A</th><th class="n">Rate</th></tr></thead><tbody>${m.rows.map((r) => `<tr>${rptPhoto(m, r.s)}<td class="nm">${esc(r.s.name)}${r.s.sid ? `<div class="sub">${esc(r.s.sid)}</div>` : ''}</td><td>${esc(r.s.group || '—')}</td><td class="n">${r.c.sessions}</td><td class="n">${r.c.P}</td><td class="n">${r.c.L}</td><td class="n">${r.c.E}</td><td class="n">${r.c.A}</td><td class="n">${rptBadge(r.band, r.c.rate)}</td></tr>`).join('') || '<tr><td colspan="9">No students</td></tr>'}</tbody></table></section>`;
   }
   const lowTitle = m.kind === 'day' ? 'Absent today and below target' : m.kind === 'student' ? 'Attendance status' : `Below ${m.threshold}% attendance`;
   const lowBody = m.kind === 'student'
@@ -3099,7 +3158,7 @@ function reportHTML(m) {
     <header class="rpt-head"><div class="rpt-logo">${rptLogo(m)}</div><div class="rpt-hd"><div class="rpt-org">${esc(m.org)}</div><h1>${esc(m.title)}</h1><div class="rpt-sub">${esc(m.typeTitle)} · <b>${esc(m.range)}</b>${m.group ? ` · ${esc(m.group)}` : ''}${m.stu ? ` · <b>${esc(m.stu.name)}</b>${m.stu.group ? ' (' + esc(m.stu.group) + ')' : ''}` : ''}</div></div>${m.address ? `<div class="rpt-addr">${esc(m.address).replace(/\n/g, '<br>')}</div>` : ''}</header>
     ${m.sample ? '<div class="rpt-sample">SAMPLE DATA — fictional students and attendance, for demonstration only</div>' : ''}
     <section class="rpt-stats">${statBoxes.join('')}</section>
-    <section class="rpt-two"><div class="rpt-box"><h2>${m.kind === 'student' ? 'Session by session' : m.kind === 'day' ? 'Trend · last sessions up to this day' : 'Attendance trend'}</h2>${rptTrendSVG(m)}${m.kind === 'student' ? `<div class="rpt-legend">${['P', 'L', 'E', 'A'].map((k) => `<span><i style="background:${RCOL[k]}"></i>${STATUS[k].label}</span>`).join('')}</div>` : ''}</div><div class="rpt-box"><h2>${m.kind === 'student' ? 'Her group and the programme' : 'Group breakdown'}</h2>${groupTbl}</div></section>
+    <section class="rpt-two"><div class="rpt-box"><h2>${m.kind === 'student' ? 'Session by session' : m.kind === 'day' ? 'Trend · last sessions up to this day' : 'Attendance trend'}</h2>${rptTrendSVG(m)}${m.kind === 'student' ? `<div class="rpt-legend">${['P', 'L', 'E', 'A'].map((k) => `<span><i style="background:${RCOL[k]}"></i>${STATUS[k].label}</span>`).join('')}</div>` : ''}</div><div class="rpt-box"><h2>${m.kind === 'student' ? 'Her institute and the programme' : 'Institute breakdown'}</h2>${groupTbl}</div></section>
     ${main}
     <section class="rpt-two rpt-keep"><div class="rpt-box"><h2>${lowTitle}</h2>${lowBody}</div>${reasonsBox}</section>
     ${notesSec}
@@ -3289,7 +3348,7 @@ async function reportPDF(m) {
   st.forEach(([k, v, col], i) => { const x = L + i * (bw + gap); doc.rrect(x, y, bw, 40, 5, C.soft); doc.text(x + bw / 2, y + 19, String(v), { size: 15, bold: true, color: col, align: 'center' }); doc.text(x + bw / 2, y + 32, k, { size: 7, color: C.muted, align: 'center' }); });
   y += 50;
   // ---- trend + groups
-  const colW = (CW - 12) / 2, gx = L + colW + 12, gRows = m.groupRows.length || 1, boxH = Math.max(150, 34 + gRows * 14);
+  const wk = m.kind === 'week', gRH = wk ? 22 : 14, colW = (CW - 12) / 2, gx = L + colW + 12, gRows = m.groupRows.length || 1, boxH = Math.max(150, 34 + gRows * gRH);
   need(boxH + 8);
   doc.rect(L, y, colW, boxH, null, C.line); doc.rect(gx, y, colW, boxH, null, C.line);
   boxTitle(L + 8, y + 15, m.kind === 'student' ? 'Session by session' : m.kind === 'day' ? 'Trend · last sessions up to this day' : 'Attendance trend');
@@ -3305,9 +3364,13 @@ async function reportPDF(m) {
     else doc.text((x0 + x1) / 2, top + ch / 2, 'No sessions in this period', { size: 8, color: C.muted, align: 'center' });
     if (m.kind === 'student') { let lx = x0; ['P', 'L', 'E', 'A'].forEach((k) => { doc.rect(lx, bot + 16, 7, 7, C[k]); lx += 10 + doc.text(lx + 10, bot + 22, STATUS[k].label, { size: 7, color: C.muted }) + 8; }); }
   }
-  boxTitle(gx + 8, y + 15, m.kind === 'student' ? 'Her group and the programme' : 'Group breakdown');
-  { let ty = y + 32; const cx = [gx + 8, gx + colW - 150, gx + colW - 90, gx + colW - 8];
-    doc.text(cx[0], ty, m.kind === 'student' ? 'Compared with' : 'Group', { size: 7, bold: true, color: C.muted }); if (m.kind !== 'student') doc.text(cx[1] + 20, ty, 'Students', { size: 7, bold: true, color: C.muted, align: 'right' }); doc.text(cx[2] + 18, ty, 'P/L/E/A', { size: 7, bold: true, color: C.muted, align: 'right' }); doc.text(cx[3], ty, 'Rate', { size: 7, bold: true, color: C.muted, align: 'right' });
+  boxTitle(gx + 8, y + 15, m.kind === 'student' ? 'Her institute and the programme' : 'Institute breakdown');
+  if (wk) { let ty = y + 32; const cx = [gx + 8, gx + colW - 64, gx + colW - 8];
+    doc.text(cx[0], ty, 'Institute', { size: 7, bold: true, color: C.muted }); doc.text(cx[1], ty, 'Students', { size: 7, bold: true, color: C.muted, align: 'right' }); doc.text(cx[2], ty, 'Rate', { size: 7, bold: true, color: C.muted, align: 'right' });
+    doc.line(gx + 8, ty + 4, gx + colW - 8, ty + 4); ty += 15;
+    m.groupRows.forEach((g) => { doc.text(cx[0], ty, wrapText(g.g, 8, true, cx[1] - cx[0] - 40, 1)[0], { size: 8, bold: true }); doc.text(cx[0], ty + 9, wrapText(PLEA(g), 6.5, false, cx[1] - cx[0] - 4, 1)[0], { size: 6.5, color: C.muted }); doc.text(cx[1], ty, String(g.n), { size: 8, align: 'right' }); badge(cx[2], ty, pct(g.rate), bandOf(g.rate), 'right'); ty += gRH; });
+  } else { let ty = y + 32; const cx = [gx + 8, gx + colW - 150, gx + colW - 90, gx + colW - 8];
+    doc.text(cx[0], ty, m.kind === 'student' ? 'Compared with' : 'Institute', { size: 7, bold: true, color: C.muted }); if (m.kind !== 'student') doc.text(cx[1] + 20, ty, 'Students', { size: 7, bold: true, color: C.muted, align: 'right' }); doc.text(cx[2] + 18, ty, 'P/L/E/A', { size: 7, bold: true, color: C.muted, align: 'right' }); doc.text(cx[3], ty, 'Rate', { size: 7, bold: true, color: C.muted, align: 'right' });
     doc.line(gx + 8, ty + 4, gx + colW - 8, ty + 4); ty += 15;
     m.groupRows.forEach((g) => { doc.text(cx[0], ty, wrapText(g.g, 8, true, cx[1] - cx[0] - 4, 1)[0], { size: 8, bold: true }); if (m.kind !== 'student') doc.text(cx[1] + 20, ty, String(g.n), { size: 8, align: 'right' }); doc.text(cx[2] + 18, ty, `${g.P}/${g.L}/${g.E}/${g.A}`, { size: 8, align: 'right' }); badge(cx[3], ty, pct(g.rate), bandOf(g.rate), 'right'); ty += 14; });
   }
@@ -3316,7 +3379,8 @@ async function reportPDF(m) {
   function table(title, cols, rows, rowH0 = 16) {
     const fixed = cols.reduce((a, c) => a + (c.w || 0), 0), flex = cols.filter((c) => !c.w).length, fw = flex ? (CW - fixed) / flex : 0;
     cols.forEach((c) => (c.ww = c.w || fw));
-    const head = () => { doc.rect(L, y, CW, 16, C.soft); let x = L; cols.forEach((c) => { doc.text(c.align === 'right' ? x + c.ww - 4 : x + 4, y + 11, c.label, { size: 7.5, bold: true, color: C.muted, align: c.align === 'right' ? 'right' : 'left' }); x += c.ww; }); y += 16; };
+    const hh = cols.some((c) => c.sub) ? 24 : 16;
+    const head = () => { doc.rect(L, y, CW, hh, C.soft); let x = L; cols.forEach((c) => { const al = c.align === 'right' ? 'right' : c.align === 'center' ? 'center' : 'left', hx = al === 'right' ? x + c.ww - 4 : al === 'center' ? x + c.ww / 2 : x + 4; doc.text(hx, y + 11, c.label, { size: 7.5, bold: true, color: C.muted, align: al }); if (c.sub) doc.text(hx, y + 19.5, c.sub, { size: 5.8, color: C.muted, align: al }); x += c.ww; }); y += hh; };
     need(40 + rowH0); doc.text(L, y + 10, title, { size: 11, bold: true, color: C.brand }); y += 18; head();
     rows.forEach((r, ri) => {
       const cells = cols.map((c) => { const v = c.get(r); const o = typeof v === 'object' && v ? v : { text: v == null ? '' : String(v) }; if (o.text != null && !o.badge) o.lines = wrapText(o.text, o.size || 8, o.bold, c.ww - 8, o.maxLines || 3); return o; });
@@ -3329,6 +3393,7 @@ async function reportPDF(m) {
         if (o.photo) doc.image(o.photo, x + 3, y + (h - 18) / 2, 18, 18, true);
         else if (o.initials) { doc.rrect(x + 3, y + (h - 18) / 2, 18, 18, 9, o.color); doc.text(x + 12, y + h / 2 + 2.5, o.initials, { size: 6.5, bold: true, color: '#FFFFFF', align: 'center' }); }
         else if (o.badge) badge(c.align === 'right' ? x + c.ww - 4 : x + 4, y + h / 2 + 3, o.text, o.badge, c.align === 'right' ? 'right' : 'left');
+        else if (o.st !== undefined) { if (o.st) { const lb = o.short ? o.st : STATUS[o.st].label, bw2 = Math.min(c.ww - 4, textW(lb, 6.5, true) + 8), bx = x + (c.ww - bw2) / 2; doc.rrect(bx, y + h / 2 - 5.5, bw2, 11, 4.5, BADGE_BG[o.st]); doc.text(x + c.ww / 2, y + h / 2 + 2.4, lb, { size: 6.5, bold: true, color: C[o.st], align: 'center' }); } else doc.text(x + c.ww / 2, y + h / 2 + 2.5, '—', { size: 8, color: C.muted, align: 'center' }); }
         else if (o.sig) doc.line(x + 4, y + h - 5, x + c.ww - 6, y + h - 5, '#999999', 0.5);
         else { const top = y + (h - o.lines.length * 10) / 2 + 7.5; o.lines.forEach((l, li) => doc.text(c.align === 'right' ? x + c.ww - 4 : x + 4, top + li * 10, l, { size: o.size || 8, bold: o.bold, color: o.color || C.ink, align: c.align === 'right' ? 'right' : 'left' })); }
         x += c.ww;
@@ -3340,12 +3405,19 @@ async function reportPDF(m) {
   }
   const phCol = m.photos ? [{ label: '', w: 26, get: (r) => (photo.get(r.s.id) ? { photo: photo.get(r.s.id) } : { initials: initials(r.s.name), color: avColor(r.s) }) }] : [];
   if (m.kind === 'day') {
-    table(`Register · ${fmtDate(m.from, 'long')}`, [{ label: '#', w: 18, get: (r) => String(m.day.indexOf(r) + 1) }, ...phCol, { label: 'Name', get: (r) => ({ text: r.s.name, bold: true }) }, { label: 'Group', w: m.withReasons ? 74 : 110, get: (r) => r.s.group || '—' }, { label: 'ID', w: 52, get: (r) => r.s.sid || '' }, { label: 'Status', w: 50, get: (r) => (r.st ? { text: STATUS[r.st].label, badge: r.st } : '—') }, ...(m.withReasons ? [{ label: 'Reason', w: 62, get: (r) => r.reason }, { label: 'Note', w: 78, get: (r) => ({ text: r.note, size: 7 }) }] : []), { label: 'Signature', w: 78, get: () => ({ sig: true }) }], m.day, 22);
+    table(`Register · ${fmtDate(m.from, 'long')}`, [{ label: '#', w: 18, get: (r) => String(m.day.indexOf(r) + 1) }, ...phCol, { label: 'Name', get: (r) => ({ text: r.s.name, bold: true }) }, { label: 'Institute', w: m.withReasons ? 74 : 110, get: (r) => r.s.group || '—' }, { label: 'ID', w: 52, get: (r) => r.s.sid || '' }, { label: 'Status', w: 50, get: (r) => (r.st ? { text: STATUS[r.st].label, badge: r.st } : '—') }, ...(m.withReasons ? [{ label: 'Reason', w: 62, get: (r) => r.reason }, { label: 'Note', w: 78, get: (r) => ({ text: r.note, size: 7 }) }] : []), { label: 'Signature', w: 78, get: () => ({ sig: true }) }], m.day, 22);
   } else if (m.kind === 'student') {
     table('Session history', [{ label: 'Date', w: 110, get: (h) => fmtDate(h.d) }, { label: 'Status', w: 80, get: (h) => ({ text: STATUS[h.s].label + (h.raw ? '' : ' *'), badge: h.s }) }, ...(m.withReasons ? [{ label: 'Reason', w: 110, get: (h) => h.reason || '' }, { label: 'Note', get: (h) => h.note || '' }] : [{ label: '', get: () => '' }])], m.history);
     if (m.history.some((h) => !h.raw)) { doc.text(L, y - 4, '* not marked — counted as absent by default', { size: 7, color: C.muted }); y += 6; }
+  } else if (wk) {
+    const nd = m.weekDays.length, short = nd > 5, dw = nd > 5 ? 30 : 38;
+    table('Students', [...phCol, { label: 'Name', get: (r) => ({ text: r.s.name + (r.s.sid ? '  ' + r.s.sid : ''), bold: true, maxLines: short ? 3 : 2 }) }, { label: 'Institute', w: m.photos ? 62 : 72, get: (r) => ({ text: r.s.group || '—', maxLines: 2 }) },
+      ...m.weekDays.map((d, i) => ({ ...dayHead(d, i), ...(short ? { sub: fmtDate(d, 'dm').replace(/,/g, '').split(' ').slice(0, 2).join(' ') } : {}), w: dw, align: 'center', get: (r) => ({ st: r.days[i], short }) })),
+      { label: 'Days', sub: 'attended', w: 42, align: 'right', get: (r) => ({ text: daysAtt(m, r), bold: true }) },
+      { label: 'Sessions', w: 38, align: 'right', get: (r) => String(r.c.sessions) }, { label: 'Rate', w: 74, align: 'right', get: (r) => ({ text: pct(r.c.rate) + (r.band === 'none' ? '' : ' · ' + BAND_LABEL[r.band]), badge: r.band }) }], m.rows, m.photos ? 24 : 18);
+    wrapText(`Each day shows her status for that date${short ? ' (P = Present, L = Late, E = Excused, A = Absent)' : ''}; Days attended = present + late out of the session days recorded this week; “—” means no session was recorded that day (or she was not yet enrolled).`, 7, false, CW).forEach((l) => { need(10); doc.text(L, y - 4, l, { size: 7, color: C.muted }); y += 9; }); y += 4;
   } else {
-    table('Students', [...phCol, { label: 'Name', get: (r) => ({ text: r.s.name + (r.s.sid ? '  ' + r.s.sid : ''), bold: true, maxLines: 2 }) }, { label: 'Group', w: 110, get: (r) => r.s.group || '—' }, { label: 'Sessions', w: 44, align: 'right', get: (r) => String(r.c.sessions) }, ...['P', 'L', 'E', 'A'].map((k) => ({ label: k, w: 26, align: 'right', get: (r) => ({ text: String(r.c[k]), color: r.c[k] ? C[k] : C.muted, bold: k === 'A' && r.c.A > 0 }) })), { label: 'Rate', w: 84, align: 'right', get: (r) => ({ text: pct(r.c.rate) + (r.band === 'none' ? '' : ' · ' + BAND_LABEL[r.band]), badge: r.band }) }], m.rows, m.photos ? 24 : 16);
+    table('Students', [...phCol, { label: 'Name', get: (r) => ({ text: r.s.name + (r.s.sid ? '  ' + r.s.sid : ''), bold: true, maxLines: 2 }) }, { label: 'Institute', w: 110, get: (r) => r.s.group || '—' }, { label: 'Sessions', w: 44, align: 'right', get: (r) => String(r.c.sessions) }, ...['P', 'L', 'E', 'A'].map((k) => ({ label: k, w: 26, align: 'right', get: (r) => ({ text: String(r.c[k]), color: r.c[k] ? C[k] : C.muted, bold: k === 'A' && r.c.A > 0 }) })), { label: 'Rate', w: 84, align: 'right', get: (r) => ({ text: pct(r.c.rate) + (r.band === 'none' ? '' : ' · ' + BAND_LABEL[r.band]), badge: r.band }) }], m.rows, m.photos ? 24 : 16);
   }
   // ---- low attendance + reasons
   const lowTitle = m.kind === 'day' ? 'Absent today and below target' : m.kind === 'student' ? 'Attendance status' : `Below ${m.threshold}% attendance`;
@@ -3555,7 +3627,7 @@ function printableCardHTML() {
     <div class="rp-layout"><div class="rp-ctl">
       <div class="field"><span>Report type</span><div class="rp-types" role="radiogroup" aria-label="Report type">${Object.entries(RTYPES).map(([k, v]) => `<button type="button" class="chip-btn ${RP.type === k ? 'on' : ''}" role="radio" aria-checked="${RP.type === k}" data-act="rpType" data-t="${k}">${esc(v)}</button>`).join('')}</div></div>
       <div id="rp-fields" class="rp-fields">${rpFieldsHTML()}</div>
-      <label class="field" id="rp-group-f" ${RP.type === 'student' ? 'hidden' : ''}>Group<select id="rp-group"><option value="">All groups</option>${gs.map(([g, n]) => `<option value="${esc(g)}" ${RP.group === g ? 'selected' : ''}>${esc(g)} (${n})</option>`).join('')}${gs.length && ungroupedCount() ? `<option value="__none" ${RP.group === '__none' ? 'selected' : ''}>Ungrouped</option>` : ''}</select></label>
+      <label class="field" id="rp-group-f" ${RP.type === 'student' ? 'hidden' : ''}>Institute<select id="rp-group"><option value="">All institutes</option>${gs.map(([g, n]) => `<option value="${esc(g)}" ${RP.group === g ? 'selected' : ''}>${esc(g)} (${n})</option>`).join('')}${gs.length && ungroupedCount() ? `<option value="__none" ${RP.group === '__none' ? 'selected' : ''}>No institute</option>` : ''}</select></label>
       <label class="switch"><input type="checkbox" id="rp-photos" ${RP.photos ? 'checked' : ''}> Include photos</label>
       <label class="switch"><input type="checkbox" id="rp-reasons" ${RP.reasons ? 'checked' : ''}> Include absence reasons &amp; notes</label>
       <label class="field">Facilitator name <span class="field-hint">(optional, printed above the signature line)</span><input type="text" id="rp-fac" value="${esc(RP.facilitator)}" maxlength="80"></label>
@@ -5091,7 +5163,7 @@ function faceStPill(s) {
   return `<span class="pill ${cls} fr-st" title="${esc(st.label)}">${t}</span>`;
 }
 function faceRosterRowHTML(s) {
-  return `<div class="fr-row" data-id="${s.id}">${avatar(s)}<div class="fr-body"><b>${esc(s.name)}</b><span class="muted small">${esc(s.group || 'No group')}</span></div>${faceStPill(s)}
+  return `<div class="fr-row" data-id="${s.id}">${avatar(s)}<div class="fr-body"><b>${esc(s.name)}</b><span class="muted small">${esc(s.group || 'No institute')}</span></div>${faceStPill(s)}
     <label class="switch fr-sw"><input type="checkbox" data-fconsent="${s.id}" ${s.faceConsent ? 'checked' : ''} aria-label="Guardian consent for face recognition: ${esc(s.name)}"><span class="fr-lbl">Consent</span></label></div>`;
 }
 function openFaceRoster() {
@@ -5250,9 +5322,9 @@ function openImport() {
   openModal({
     title: 'Import participants', wide: true,
     body: `<div class="tabs" role="tablist"><button class="on" data-tab="file">${icon('upload', 'sm')} Upload file</button><button data-tab="paste">${icon('file', 'sm')} Paste names</button></div>
-      <div data-pane="file"><div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose a file">${icon('upload', 'lg')}<p style="margin:8px 0 4px"><b>Drop a CSV or Excel file here</b>, or tap to choose</p><p class="muted small" style="margin:0">.csv, .tsv, .txt or .xlsx (first sheet). Columns like <i>Name / Full name / First + Last name</i>, <i>Group / Cohort / Team</i>, <i>ID</i>, <i>Phone</i>, <i>Email</i> are detected automatically.</p></div>
+      <div data-pane="file"><div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose a file">${icon('upload', 'lg')}<p style="margin:8px 0 4px"><b>Drop a CSV or Excel file here</b>, or tap to choose</p><p class="muted small" style="margin:0">.csv, .tsv, .txt or .xlsx (first sheet). Columns like <i>Name / Full name / First + Last name</i>, <i>Institute / School / Group</i>, <i>ID</i>, <i>Phone</i>, <i>Email</i> are detected automatically.</p></div>
         <p class="small" style="margin:10px 0 0"><button class="link" data-act="downloadTemplate">Download a sample CSV template</button></p></div>
-      <div data-pane="paste" hidden><label class="field">One student per line. Optionally add a group after a comma (or paste straight from Excel / Google Sheets).<textarea id="paste" rows="8" placeholder="Ama Sample, Web Dev A&#10;Akosua Demo, Web Dev A&#10;Yaa Sample, Data Science&#10;Kemi Demo"></textarea></label><div class="row"><button class="btn btn-primary" id="paste-go">Preview</button></div></div>
+      <div data-pane="paste" hidden><label class="field">One student per line. Optionally add an institute after a comma (or paste straight from Excel / Google Sheets).<textarea id="paste" rows="8" placeholder="Ama Sample, Web Dev A&#10;Akosua Demo, Web Dev A&#10;Yaa Sample, Data Science&#10;Kemi Demo"></textarea></label><div class="row"><button class="btn btn-primary" id="paste-go">Preview</button></div></div>
       <div id="imp-preview"></div>`,
     foot: `<button class="btn btn-ghost" data-close>Cancel</button><button class="btn btn-primary" id="imp-go" disabled>${icon('check', 'sm')} Import</button>`,
     onMount(el, close) {
@@ -5287,10 +5359,10 @@ function openImport() {
         let dups = 0; recs.forEach((r) => { const k = r.name.toLowerCase(); r.onRoster = existing.has(k); r.dup = r.onRoster || seen.has(k); if (r.dup) dups++; seen.add(k); });
         const fresh = recs.length - dups;
         el.querySelector('#imp-preview').innerHTML = `<hr class="sep" style="margin:4px 0"><div class="row" style="justify-content:space-between"><h3>Preview · ${esc(I.source)}</h3><label class="switch small"><input type="checkbox" id="imp-hdr" ${I.hdr >= 0 ? 'checked' : ''}> First row is a header</label></div>
-          <div class="map-grid"><label class="field">Name *${opt('name')}</label><label class="field">…or First name${opt('first')}</label><label class="field">Last name${opt('last')}</label><label class="field">Group${opt('group')}</label><label class="field">ID${opt('sid')}</label><label class="field">Phone${opt('phone')}</label><label class="field">Email${opt('email')}</label></div>
-          <div class="preview"><table><thead><tr><th>#</th><th>Name</th><th>Group</th><th>ID</th><th>Phone</th><th>Email</th></tr></thead><tbody>${recs.slice(0, 100).map((r, i) => `<tr class="${r.dup ? 'dup' : ''}"><td>${i + 1}</td><td>${esc(r.name)}</td><td>${esc(r.group)}</td><td>${esc(r.sid)}</td><td>${esc(r.phone)}</td><td>${esc(r.email)}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">No names found with this column mapping.</td></tr>'}</tbody></table></div>
+          <div class="map-grid"><label class="field">Name *${opt('name')}</label><label class="field">…or First name${opt('first')}</label><label class="field">Last name${opt('last')}</label><label class="field">Institute${opt('group')}</label><label class="field">ID${opt('sid')}</label><label class="field">Phone${opt('phone')}</label><label class="field">Email${opt('email')}</label></div>
+          <div class="preview"><table><thead><tr><th>#</th><th>Name</th><th>Institute</th><th>ID</th><th>Phone</th><th>Email</th></tr></thead><tbody>${recs.slice(0, 100).map((r, i) => `<tr class="${r.dup ? 'dup' : ''}"><td>${i + 1}</td><td>${esc(r.name)}</td><td>${esc(r.group)}</td><td>${esc(r.sid)}</td><td>${esc(r.phone)}</td><td>${esc(r.email)}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">No names found with this column mapping.</td></tr>'}</tbody></table></div>
           <p class="small" id="imp-sum" style="margin:0"><b>${plural(fresh, 'new student')}</b> will be added${dups ? ` · ${dups} duplicate${dups === 1 ? '' : 's'} (already on the roster or repeated) will be skipped` : ''}${recs.length > 100 ? ' · showing first 100' : ''}.</p>
-          ${recs.some((r) => r.onRoster) ? `<label class="switch small"><input type="checkbox" id="imp-upd" ${I.updateExisting ? 'checked' : ''}> Update group/details of students already on the roster</label>` : ''}`;
+          ${recs.some((r) => r.onRoster) ? `<label class="switch small"><input type="checkbox" id="imp-upd" ${I.updateExisting ? 'checked' : ''}> Update institute/details of students already on the roster</label>` : ''}`;
         el.querySelectorAll('[data-map]').forEach((s) => (s.onchange = () => { I.map[s.dataset.map] = +s.value; drawPreview(); }));
         el.querySelector('#imp-hdr').onchange = (e) => { I.hdr = e.target.checked ? Math.max(0, findHeaderRow(rows)) : -1; I.map = defaultMap(rows, I.hdr); drawPreview(); };
         const up = el.querySelector('#imp-upd'); if (up) up.onchange = () => { I.updateExisting = up.checked; };
@@ -5370,7 +5442,8 @@ const ACT = {
   toggleSearch: () => { const tb = $('#topbar'); tb.classList.toggle('searching'); if (tb.classList.contains('searching')) $('#gsearch').focus(); else closeResults(); },
   dismissBanner: () => { bannerDismissed = todayISO(); renderBanner(route()); },
   sampleInfo: async () => { const ok = await confirmDialog({ title: 'Sample data is loaded', body: '<p>The students and attendance you see are <b>fictional sample data</b> for demonstration. Clear them when you are ready to import your real participant list.</p>', ok: 'Clear sample data', danger: true }); if (ok) { const st = S.settings; S = defaults(); S.settings = st; save(); await clearPhotos(); M.date = null; HV.date = null; SV.sel.clear(); toast('Sample data cleared'); go('#/dashboard'); } },
-  markMode: (el) => { M.mode = el.dataset.mode; localStorage.setItem('agcci-mode', M.mode); if (M.mode === 'cards') resetMarkPosition(); render(); },
+  markMode: (el) => { M.mode = el.dataset.mode; localStorage.setItem('agcci-mode', M.mode); M.snap = null; if (M.mode === 'cards') resetMarkPosition(); render(); },
+  markResort: () => { M.snap = null; refreshMark(); },
   markShift: (el) => go('#/mark/' + addDays(M.date, +el.dataset.n)),
   markToday: () => go('#/mark/' + todayISO()),
   cardMark: (el) => cardMark(el.dataset.st),
@@ -5385,9 +5458,9 @@ const ACT = {
   selAll: (el) => { $$('#st-list [data-act=selOne]').forEach((c) => { c.checked = el.checked; if (el.checked) SV.sel.add(c.dataset.id); else SV.sel.delete(c.dataset.id); }); drawSelBar(); },
   clearSel: () => { SV.sel.clear(); drawStudentList(); },
   removeSelected: () => removeStudents([...SV.sel]),
-  assignGroup: async () => { const ids = [...SV.sel]; const g = await groupPrompt(`Assign ${plural(ids.length, 'student')} to group`, '', 'Assign'); if (g === null) return; ids.forEach((id) => { const s = studentById(id); if (s) s.group = g; }); save(); SV.sel.clear(); toast(g ? `Moved ${plural(ids.length, 'student')} to ${g}` : `Removed ${plural(ids.length, 'student')} from their group`, { type: 'success' }); render(); },
-  renameGroup: async (el) => { const old = el.dataset.g; const g = await groupPrompt(`Rename “${old}”`, old, 'Rename'); if (g === null || g === old) return; S.students.forEach((s) => { if (s.group === old) s.group = g; }); save(); toast(g ? `Renamed to ${g}` : `Removed group ${old}`, { type: 'success' }); render(); },
-  deleteGroup: async (el) => { const g = el.dataset.g; const ok = await confirmDialog({ title: `Remove group “${g}”?`, body: '<p>Students stay on the roster — they just become ungrouped.</p>', ok: 'Remove group', danger: true }); if (!ok) return; S.students.forEach((s) => { if (s.group === g) s.group = ''; }); save(); toast(`Group ${g} removed`); render(); },
+  assignGroup: async () => { const ids = [...SV.sel]; const g = await groupPrompt(`Assign ${plural(ids.length, 'student')} to an institute`, '', 'Assign'); if (g === null) return; ids.forEach((id) => { const s = studentById(id); if (s) s.group = g; }); save(); SV.sel.clear(); toast(g ? `Moved ${plural(ids.length, 'student')} to ${g}` : `Removed ${plural(ids.length, 'student')} from their institute`, { type: 'success' }); render(); },
+  renameGroup: async (el) => { const old = el.dataset.g; const g = await groupPrompt(`Rename “${old}”`, old, 'Rename'); if (g === null || g === old) return; S.students.forEach((s) => { if (s.group === old) s.group = g; }); save(); toast(g ? `Renamed to ${g}` : `Removed institute ${old}`, { type: 'success' }); render(); },
+  deleteGroup: async (el) => { const g = el.dataset.g; const ok = await confirmDialog({ title: `Remove institute “${g}”?`, body: '<p>Students stay on the roster — they just won’t have an institute.</p>', ok: 'Remove institute', danger: true }); if (!ok) return; S.students.forEach((s) => { if (s.group === g) s.group = ''; }); save(); toast(`Institute ${g} removed`); render(); },
   groupToday: (el) => { const g = el.dataset.g, st = el.dataset.st, t = todayISO(); const list = S.students.filter((s) => s.group === g); const snap = list.map((s) => [s.id, rawStatus(t, s.id)]); list.forEach((s) => setStatus(t, s.id, st)); save(); toast(`${g}: ${plural(list.length, 'student')} marked ${STATUS[st].label.toLowerCase()} today`, { type: 'success', action: { label: 'Undo', fn: () => { snap.forEach(([id, p]) => setStatus(t, id, p)); save(); render(); } } }); render(); },
   pickReason: (el) => { const { d, sid, ctx, r } = el.dataset; const cur = markExtra(d, sid).reason; setMarkExtra(d, sid, { reason: cur === r ? '' : r }); save(); afterReason(ctx, d, sid); },
   reasonOther: (el) => reasonOther(el),
@@ -5423,7 +5496,7 @@ const ACT = {
   restore: () => { const f = $('#file-restore'); f.value = ''; f.click(); },
   testNotify: () => fireReminder(true),
   clearAttendance: async () => { const ok = await confirmDialog({ title: 'Clear all attendance?', body: '<p>Every attendance record will be deleted. Your student list stays.</p>', ok: 'Clear attendance', danger: true, typeToConfirm: 'CLEAR' }); if (!ok) return; S.sessions = {}; save(); toast('Attendance cleared'); render(); },
-  clearAll: async () => { const ok = await confirmDialog({ title: 'Clear ALL data?', body: '<p>This permanently deletes all students, groups, attendance and settings from this device. <b>This cannot be undone.</b> Consider downloading a backup first.</p>' + syncClearNote(), ok: 'Delete everything', danger: true, typeToConfirm: 'DELETE', collect: (el) => ({ scope: (el.querySelector('[name=clr-scope]:checked') || {}).value || 'device' }) }); if (!ok) return; if (syncOn() && ok.scope !== 'all') await syncDisconnectBtn('keep'); S = defaults(); save(); await clearPhotos(); await faceDeleteAll(); applyTheme(); M.date = null; HV.date = null; SV.sel.clear(); toast('All data cleared'); go('#/dashboard'); },
+  clearAll: async () => { const ok = await confirmDialog({ title: 'Clear ALL data?', body: '<p>This permanently deletes all students, institutes, attendance and settings from this device. <b>This cannot be undone.</b> Consider downloading a backup first.</p>' + syncClearNote(), ok: 'Delete everything', danger: true, typeToConfirm: 'DELETE', collect: (el) => ({ scope: (el.querySelector('[name=clr-scope]:checked') || {}).value || 'device' }) }); if (!ok) return; if (syncOn() && ok.scope !== 'all') await syncDisconnectBtn('keep'); S = defaults(); save(); await clearPhotos(); await faceDeleteAll(); applyTheme(); M.date = null; HV.date = null; SV.sel.clear(); toast('All data cleared'); go('#/dashboard'); },
 };
 document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-act]'); if (!el || el.disabled) return;
@@ -5442,7 +5515,7 @@ function drawResults() {
   const res = sortedStudents().map((s) => { const n = s.name.toLowerCase(); const score = n.startsWith(q) ? 0 : n.split(/\s+/).some((p) => p.startsWith(q)) ? 1 : n.includes(q) ? 2 : [s.sid, s.phone, s.email, s.group].some((f) => (f || '').toLowerCase().includes(q)) ? 3 : 9; return { s, score }; }).filter((x) => x.score < 9).sort((a, b) => a.score - b.score).slice(0, 8);
   gIdx = Math.min(gIdx, Math.max(0, res.length - 1));
   const dates = sessionDates();
-  box.innerHTML = res.length ? res.map((x, i) => `<button type="button" class="${i === gIdx ? 'hl' : ''}" data-go="${x.s.id}">${avatar(x.s)}<span style="flex:1;min-width:0"><b>${esc(x.s.name)}</b><br><span class="muted small">${esc(x.s.group || 'No group')}</span></span>${ratePill(studentStats(x.s, dates).rate)}</button>`).join('') : `<div class="empty">No student matches “${esc(q)}”</div>`;
+  box.innerHTML = res.length ? res.map((x, i) => `<button type="button" class="${i === gIdx ? 'hl' : ''}" data-go="${x.s.id}">${avatar(x.s)}<span style="flex:1;min-width:0"><b>${esc(x.s.name)}</b><br><span class="muted small">${esc(x.s.group || 'No institute')}</span></span>${ratePill(studentStats(x.s, dates).rate)}</button>`).join('') : `<div class="empty">No student matches “${esc(q)}”</div>`;
   box.hidden = false;
 }
 function pickResult(id) { $('#gsearch').value = ''; closeResults(); $('#topbar').classList.remove('searching'); $('#gsearch').blur(); go('#/student/' + id); }
